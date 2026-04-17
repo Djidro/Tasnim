@@ -9,12 +9,27 @@
         "Tasnim, you make life magical ✨"
     ];
     const memories = [
-        { title: "🌟 First time I thought about you", full: "It was a random Tuesday, and you stayed in my mind like a beautiful song." },
-        { title: "💫 The moment you made me smile", full: "When you laughed at my silly joke — I knew I wanted to hear it forever." },
-        { title: "🌙 Late night talks", full: "We talked until 3am about stars and dreams. I felt so close to you." },
-        { title: "📸 First photo together", full: "Awkward but perfect. I still look at it when I miss you." }
-    ];
-
+    { 
+        title: "🌟 First time I thought about you", 
+        full: "It was a random Tuesday, and you stayed in my mind like a beautiful song.",
+        image: "images/gallery-1.jpg"  // Add your image filename here
+    },
+    { 
+        title: "💫 The moment you made me smile", 
+        full: "When you laughed at my silly joke — I knew I wanted to hear it forever.",
+        image: "images/gallery-2.jpg"  // Add your image filename here
+    },
+    { 
+        title: "🌙 Late night talks", 
+        full: "We talked until 3am about stars and dreams. I felt so close to you.",
+        image: "images/gallery-3.jpg"  // Add your image filename here
+    },
+    { 
+        title: "📸 First photo together", 
+        full: "Awkward but perfect. I still look at it when I miss you.",
+        image: "images/gallery-4.jpg"  // Add your image filename here
+    }
+];
     // ----- game state ------
     let currentScreen = 'home';
     let storyLevel = 1;            // 1..5
@@ -262,18 +277,44 @@
 
     // ----- MEMORY GALLERY -----
     function renderMemoryGallery() {
-        const grid = document.getElementById('memoryGrid');
-        grid.innerHTML = '';
-        memories.forEach((mem, i) => {
-            const card = document.createElement('div'); card.className='memory-card';
-            card.textContent = mem.title;
-            card.addEventListener('click', ()=>{
-                document.getElementById('expandedMemory').innerHTML = `💬 ${mem.full}`;
-            });
-            grid.appendChild(card);
+    const grid = document.getElementById('memoryGrid');
+    grid.innerHTML = '';
+    memories.forEach((mem, i) => {
+        const card = document.createElement('div'); 
+        card.className = 'memory-card';
+        
+        // Add image to card
+        if (mem.image) {
+            const img = document.createElement('img');
+            img.src = mem.image;
+            img.alt = mem.title;
+            img.style.width = '100%';
+            img.style.height = '120px';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '16px';
+            img.style.marginBottom = '8px';
+            card.appendChild(img);
+        }
+        
+        // Add title
+        const titleSpan = document.createElement('span');
+        titleSpan.textContent = mem.title;
+        titleSpan.style.display = 'block';
+        titleSpan.style.fontWeight = '600';
+        card.appendChild(titleSpan);
+        
+        card.addEventListener('click', () => {
+            const expandedDiv = document.getElementById('expandedMemory');
+            let expandedContent = `<div style="display: flex; gap: 16px; align-items: start;">`;
+            if (mem.image) {
+                expandedContent += `<img src="${mem.image}" alt="${mem.title}" style="width: 120px; height: 120px; object-fit: cover; border-radius: 20px;">`;
+            }
+            expandedContent += `<div style="flex:1;"><strong>${mem.title}</strong><br>💬 ${mem.full}</div></div>`;
+            expandedDiv.innerHTML = expandedContent;
         });
-    }
-
+        grid.appendChild(card);
+    });
+}
     // ----- AUDIO (Web Audio)-----
     function playBgMusic(){ /* soft oscillator not included for brevity, but we use simple oscillator if allowed */ }
     function stopBgMusic(){}
