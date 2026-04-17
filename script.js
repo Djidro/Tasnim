@@ -8,27 +8,23 @@
         "I fall for you again and again.", "You're the heart of my game.",
         "Tasnim, you make life magical ✨"
     ];
-    const memories = [
+  const memories = [
     { 
         title: "🌟 First time I thought about you", 
         full: "It was a random Tuesday, and you stayed in my mind like a beautiful song.",
-        image: "images/gallery-1.jpg"  // Add your image filename here
+        image: "gallery-1.jpg"  // ← Remove "images/"
     },
     { 
         title: "💫 The moment you made me smile", 
         full: "When you laughed at my silly joke — I knew I wanted to hear it forever.",
-        image: "images/gallery-2.jpg"  // Add your image filename here
+        image: "gallery-2.jpg"  // ← Remove "images/"
     },
     { 
         title: "🌙 Late night talks", 
         full: "We talked until 3am about stars and dreams. I felt so close to you.",
-        image: "images/gallery-3.jpg"  // Add your image filename here
+        image: "IMG_9813.png"   // ← Use your actual file name
     },
-    { 
-        title: "📸 First photo together", 
-        full: "Awkward but perfect. I still look at it when I miss you.",
-        image: "images/gallery-4.jpg"  // Add your image filename here
-    }
+    // Remove the fourth one or add another image
 ];
     // ----- game state ------
     let currentScreen = 'home';
