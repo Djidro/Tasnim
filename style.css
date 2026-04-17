@@ -1,0 +1,239 @@
+/* ----- GLOBAL: soft romantic palette ----- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', 'Quicksand', system-ui, -apple-system, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background: linear-gradient(145deg, #fce4ec 0%, #f8bbd9 40%, #e1bee7 100%);
+    background-attachment: fixed;
+    color: #4a2040;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* floating heart particles (background) */
+#heart-particle-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.game-wrapper {
+    width: 100%;
+    max-width: 700px;
+    background: rgba(255, 240, 245, 0.65);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-radius: 48px 48px 40px 40px;
+    box-shadow: 0 25px 50px -8px rgba(190, 70, 120, 0.25), 0 0 0 1px rgba(255, 220, 240, 0.5);
+    padding: 24px 22px 32px;
+    z-index: 5;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* all screens */
+.screen {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translateY(6px);
+}
+
+.screen.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* typography */
+h1, h2 {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-shadow: 2px 2px 0 rgba(255, 220, 240, 0.6);
+}
+
+.glow-text {
+    color: #a53860;
+    text-shadow: 0 0 8px #ffb6c1, 0 0 20px #ff99aa;
+}
+
+button {
+    background: rgba(255, 235, 245, 0.9);
+    border: 1.5px solid #ffb0c3;
+    color: #7b2d4b;
+    padding: 12px 20px;
+    border-radius: 60px;
+    font-weight: 600;
+    font-size: 1rem;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 6px 12px rgba(210, 100, 130, 0.15);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 6px 4px;
+    flex: 0 1 auto;
+}
+
+button:hover {
+    background: #ffe4f2;
+    box-shadow: 0 10px 18px #e5a0bb;
+    transform: scale(1.02) translateY(-2px);
+    border-color: #ff8aae;
+}
+
+/* name display */
+.girl-name-badge {
+    background: #fff0f5dd;
+    border-radius: 100px;
+    padding: 6px 18px;
+    display: inline-block;
+    border: 1px solid #f9b8d2;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #8f3f60;
+    backdrop-filter: blur(8px);
+    margin-bottom: 12px;
+}
+
+/* navigation bar */
+.nav-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 18px 0 14px;
+}
+
+.nav-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    background: #ffeef4dd;
+}
+
+/* memory cards */
+.memory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+.memory-card {
+    background: #ffe8f0ee;
+    border-radius: 24px;
+    padding: 16px 8px;
+    text-align: center;
+    backdrop-filter: blur(4px);
+    border: 1px solid #ffc1d4;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0 8px 12px #ebb0c7;
+}
+.memory-card:hover {
+    background: #ffeef7;
+    transform: rotate(0.5deg) scale(1.02);
+}
+.expanded-message {
+    margin-top: 16px;
+    font-style: italic;
+    background: #f7d7e6c0;
+    padding: 14px;
+    border-radius: 28px;
+}
+
+/* story container */
+.story-box {
+    background: #ffeef4e6;
+    padding: 20px 16px;
+    border-radius: 36px;
+    backdrop-filter: blur(8px);
+    border: 1px solid #ffd9e2;
+}
+
+.dialogue {
+    min-height: 100px;
+    font-size: 1.2rem;
+    margin: 16px 0;
+    padding: 8px;
+    background: #ffffffb0;
+    border-radius: 28px;
+    line-height: 1.5;
+}
+
+/* mini game canvas area */
+#gameCanvas {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    background: #fbdae7c0;
+    border-radius: 36px;
+    display: block;
+    margin: 10px auto;
+    box-shadow: inset 0 0 10px #d48daa, 0 12px 18px #d49bb3;
+    border: 2px solid #ffb3c6;
+    touch-action: none;  /* prevent scroll on touch */
+}
+
+/* popup & overlays */
+.popup-message {
+    position: fixed;
+    bottom: 30px;
+    left: 20px;
+    right: 20px;
+    max-width: 400px;
+    margin: 0 auto;
+    background: #ffe3f1f0;
+    backdrop-filter: blur(16px);
+    padding: 18px 22px;
+    border-radius: 60px;
+    text-align: center;
+    font-weight: 600;
+    color: #ac3f64;
+    box-shadow: 0 12px 30px #d4739e;
+    border: 1px solid white;
+    z-index: 200;
+    animation: floatPop 0.4s;
+}
+
+@keyframes floatPop {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* settings toggle */
+.toggle-audio {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffe3eec0;
+    padding: 12px 24px;
+    border-radius: 60px;
+    margin: 16px 0;
+}
+
+/* responsive */
+@media (max-width: 480px) {
+    .game-wrapper { padding: 16px 12px; }
+    button { padding: 10px 14px; }
+}
+
+/* heart cursor/glow */
+.heart-bullet::before {
+    content: "❤️ ";
+}
+
+.final-message {
+    font-size: 1.3rem;
+    text-align: center;
+    padding: 24px;
+}
