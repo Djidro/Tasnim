@@ -122,35 +122,40 @@ button:hover {
     background: #ffeef4dd;
 }
 
-/* memory cards */
-.memory-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-}
 .memory-card {
     background: #ffe8f0ee;
     border-radius: 24px;
-    padding: 16px 8px;
+    padding: 12px;
     text-align: center;
     backdrop-filter: blur(4px);
     border: 1px solid #ffc1d4;
     cursor: pointer;
     transition: 0.2s;
     box-shadow: 0 8px 12px #ebb0c7;
+    display: flex;
+    flex-direction: column;
 }
-.memory-card:hover {
-    background: #ffeef7;
-    transform: rotate(0.5deg) scale(1.02);
+
+.memory-card img {
+    transition: transform 0.3s ease;
 }
+
+.memory-card:hover img {
+    transform: scale(1.05);
+}
+
 .expanded-message {
     margin-top: 16px;
     font-style: italic;
     background: #f7d7e6c0;
-    padding: 14px;
+    padding: 18px;
     border-radius: 28px;
 }
 
+.expanded-message img {
+    border: 2px solid #ffb0c3;
+    box-shadow: 0 4px 12px rgba(210, 100, 130, 0.2);
+}
 /* story container */
 .story-box {
     background: #ffeef4e6;
