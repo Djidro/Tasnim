@@ -11,26 +11,26 @@
 const memories = [
     { 
         type: "video",
-        title: "🌟 A Song for You", 
-        full: "This melody reminds me of the peace you bring.",
+        title: "🌟 First video together", 
+        full: "From nothing, this video reflects what we dreamed of becoming.",
         videoId: "oLGeMfnNP5g"
     },
     { 
         type: "image",
-        title: "💫 The moment you made me smile", 
-        full: "When you laughed at my silly joke — I knew I wanted to hear it forever.",
+        title: "💫meaningful", 
+        full: "The moment our love grew deeper and more meaningful.",
         image: "gallery-1.jpg"
     },
     { 
         type: "image",
-        title: "🌙 Late night talks", 
-        full: "We talked until 3am about stars and dreams. I felt so close to you.",
+        title: "🌙 28.dec.2017", 
+        full: "28 Dec 2017 the day forever began.",
         image: "gallery-2.jpg"
     },
     { 
         type: "video",
         title: "💫 Our Beautiful World", 
-        full: "Every scene in this reminds me of our dreams together.",
+        full: " Even with many reasons to break up, we held on to each other.",
         videoId: "mKZUeGkqtEQ"
     },
     { 
@@ -41,7 +41,7 @@ const memories = [
     },
     { 
         type: "image",
-        title: "🌸 Beautiful you", 
+        title: "🌸 Queen almahdi", 
         full: "My life, my story, my memories—summed up in one photo.",
         image: "gallery-4.jpg"
     },
