@@ -122,6 +122,7 @@ button:hover {
     background: #ffeef4dd;
 }
 
+
 .memory-card {
     background: #ffe8f0ee;
     border-radius: 24px;
@@ -130,10 +131,13 @@ button:hover {
     backdrop-filter: blur(4px);
     border: 1px solid #ffc1d4;
     cursor: pointer;
-    transition: 0.2s;
+    transition: all 0.3s ease;
     box-shadow: 0 8px 12px #ebb0c7;
-    display: flex;
-    flex-direction: column;
+}
+
+.memory-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 25px #d4739e;
 }
 
 .memory-card img {
@@ -143,18 +147,29 @@ button:hover {
 .memory-card:hover img {
     transform: scale(1.05);
 }
-
 .expanded-message {
-    margin-top: 16px;
+    margin-top: 20px;
     font-style: italic;
     background: #f7d7e6c0;
-    padding: 18px;
+    padding: 20px;
     border-radius: 28px;
+    backdrop-filter: blur(8px);
+    border: 2px solid #ffb0c3;
 }
 
 .expanded-message img {
-    border: 2px solid #ffb0c3;
-    box-shadow: 0 4px 12px rgba(210, 100, 130, 0.2);
+    transition: transform 0.3s ease;
+    cursor: pointer;
+}
+
+.expanded-message img:hover {
+    transform: scale(1.02);
+}
+
+.expanded-message img:fullscreen {
+    object-fit: contain;
+    background: #fce4ec;
+    padding: 20px;
 }
 /* story container */
 .story-box {
