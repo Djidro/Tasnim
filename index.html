@@ -3,95 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Love Quest 💚 · Tasnim</title>
+    <title>🔐 Love Quest · Tasnim</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- floating hearts background -->
     <canvas id="heart-particle-canvas"></canvas>
-    <div class="game-wrapper">
-        <!-- dynamic name header -->
-        <div id="dynamicNameDisplay" class="girl-name-badge">✨ Tasnim ✨</div>
 
-        <!-- ========== SCREENS ========= -->
-        <!-- HOME SCREEN -->
-        <div id="homeScreen" class="screen active">
-            <h1 style="font-size: 2.4rem;">Love Quest 💚</h1>
-            <p style="margin: 8px 0 18px; font-size: 1.3rem;" id="welcomeMessage">Welcome, Tasnim 💚 This world was made just for you.</p>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                <button id="startStoryBtn">🌸 Story Mode</button>
-                <button id="goMiniGameBtn">🎮 Catch the Hearts</button>
-                <button id="goDailyBtn">💌 Daily Love Message</button>
-                <button id="goGalleryBtn">🖼️ Memory Gallery</button>
-                <button id="goSettingsBtn">⚙️ Settings</button>
-            </div>
-            <div style="margin-top: 28px;">
-                <button id="missMeBtn">🥺 Miss Me?</button>
-                <button id="whatsappBtn" style="background: #dcf8c6;">💬 Send me a message ❤️</button>
-            </div>
+    <!-- ========== PASSWORD PROTECTION OVERLAY ========= -->
+    <div id="loginOverlay">
+        <div class="login-card">
+            <h2>🔐💗</h2>
+            <p style="font-size: 1.3rem; margin-bottom: 8px;">Only for Tasnim</p>
+            <p style="margin-bottom: 20px;">Enter our special date ✨</p>
+            <input type="password" id="passwordInput" class="login-input" placeholder="••••••" autocomplete="off" inputmode="text">
+            <button class="login-btn" id="loginBtn">Unlock my heart ❤️</button>
+            <div id="loginError" class="error-message"></div>
+            <div class="hint-note">💫 our forever date</div>
         </div>
+    </div>
 
-        <!-- STORY MODE SCREEN -->
-        <div id="storyScreen" class="screen">
-            <h2>📖 Story · <span id="levelIndicator">Chapter 1</span></h2>
-            <div class="story-box">
-                <div id="storyDialogue" class="dialogue">✨ ...</div>
-                <div id="storyChoices" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
-            </div>
-            <div style="margin-top: 16px; text-align: center;">
-                <button id="backFromStory">🏠 Home</button>
-            </div>
-        </div>
+    <!-- ========== MAIN WEBSITE (hidden until correct password) ========= -->
+    <div id="mainApp">
+        <div class="game-wrapper">
+            <div id="dynamicNameDisplay" class="girl-name-badge">✨ Tasnim ✨</div>
 
-        <!-- MINI GAME SCREEN -->
-        <div id="miniGameScreen" class="screen">
-            <h2>💚 Catch the Hearts</h2>
-            <div style="display: flex; justify-content: space-between;">
-                <span>Score: <span id="gameScore">0</span></span>
-                <span💚💚</span>
+            <!-- HOME SCREEN -->
+            <div id="homeScreen" class="screen active">
+                <h1 style="font-size: 2.4rem;">Love Quest 💚</h1>
+                <p style="margin: 8px 0 18px; font-size: 1.3rem;" id="welcomeMessage">Welcome, Tasnim 💚 This world was made just for you.</p>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button id="startStoryBtn">🌸 Story Mode</button>
+                    <button id="goMiniGameBtn">🎮 Catch the Hearts</button>
+                    <button id="goDailyBtn">💌 Daily Love Message</button>
+                    <button id="goGalleryBtn">🖼️ Memory Gallery</button>
+                    <button id="goSettingsBtn">⚙️ Settings</button>
+                </div>
+                <div style="margin-top: 28px;">
+                    <button id="missMeBtn">🥺 Miss Me?</button>
+                    <button id="whatsappBtn" style="background: #dcf8c6;">💬 Send me a message ❤️</button>
+                </div>
             </div>
-            <canvas id="gameCanvas" width="500" height="400"></canvas>
-            <div style="display: flex; gap: 8px; margin-top: 8px;">
-                <button id="restartMiniGame">🔄 Restart</button>
-                <button id="backFromMiniGame">🏠 Home</button>
-            </div>
-            <p style="margin-top: 12px; font-size: 0.9rem;">← → move · catch hearts!</p>
-        </div>
 
-        <!-- DAILY LOVE SCREEN -->
-        <div id="dailyScreen" class="screen">
-            <h2>💌 Love Message For You</h2>
-            <div style="background: #fff0f7dd; border-radius: 48px; padding: 30px; margin: 20px 0; text-align: center; font-size: 1.5rem;" id="dailyMessageDisplay"></div>
-            <div style="display: flex; gap: 10px; justify-content: center;">
-                <button id="refreshDailyBtn">💫 New Message</button>
-                <button id="backFromDaily">🏠 Home</button>
+            <!-- STORY SCREEN -->
+            <div id="storyScreen" class="screen">
+                <h2>📖 Story · <span id="levelIndicator">Chapter 1</span></h2>
+                <div class="story-box">
+                    <div id="storyDialogue" class="dialogue">✨ ...</div>
+                    <div id="storyChoices" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
+                </div>
+                <div style="margin-top: 16px; text-align: center;">
+                    <button id="backFromStory">🏠 Home</button>
+                </div>
             </div>
-        </div>
 
-        <!-- MEMORY GALLERY -->
-        <div id="galleryScreen" class="screen">
-            <h2>🕊️ Our little moments</h2>
-            <div id="videoReelContainer" class="video-reel-container"></div>
-            <button id="backFromGallery" style="margin-top: 20px;">🏠 Home</button>
-        </div>
-        
-        <!-- SETTINGS SCREEN -->
-        <div id="settingsScreen" class="screen">
-            <h2>⚙️ Settings & love</h2>
-            <div class="toggle-audio">
-                <span>🎵 Romantic bg music</span>
-                <button id="toggleMusicBtn">🔊 ON</button>
+            <!-- MINI GAME SCREEN -->
+            <div id="miniGameScreen" class="screen">
+                <h2>💚 Catch the Hearts</h2>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Score: <span id="gameScore">0</span></span>
+                    <span>💚💚</span>
+                </div>
+                <canvas id="gameCanvas" width="500" height="400"></canvas>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button id="restartMiniGame">🔄 Restart</button>
+                    <button id="backFromMiniGame">🏠 Home</button>
+                </div>
+                <p style="margin-top: 12px; font-size: 0.9rem;">← → move · catch hearts!</p>
             </div>
-            <div class="toggle-audio">
-                <span>⌨️ Typing sound</span>
-                <button id="toggleTypingSoundBtn">🔊 ON</button>
-            </div>
-            <button id="resetProgressBtn">🔄 Reset story progress</button>
-            <button id="backFromSettings" style="margin-top: 24px;">🏠 Home</button>
-            <p style="margin-top: 16px;">Progress saved automatically ❤️</p>
-        </div>
 
-        <!-- GAME OVER / FINAL screen (embedded) -->
-        <div id="finalMessageContainer" style="margin-top: 16px;"></div>
+            <!-- DAILY LOVE SCREEN -->
+            <div id="dailyScreen" class="screen">
+                <h2>💌 Love Message For You</h2>
+                <div style="background: #fff0f7dd; border-radius: 48px; padding: 30px; margin: 20px 0; text-align: center; font-size: 1.5rem;" id="dailyMessageDisplay"></div>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button id="refreshDailyBtn">💫 New Message</button>
+                    <button id="backFromDaily">🏠 Home</button>
+                </div>
+            </div>
+
+            <!-- MEMORY GALLERY -->
+            <div id="galleryScreen" class="screen">
+                <h2>🕊️ Our little moments</h2>
+                <div id="videoReelContainer" class="video-reel-container"></div>
+                <button id="backFromGallery" style="margin-top: 20px;">🏠 Home</button>
+            </div>
+
+            <!-- SETTINGS SCREEN -->
+            <div id="settingsScreen" class="screen">
+                <h2>⚙️ Settings & love</h2>
+                <div class="toggle-audio">
+                    <span>🎵 Romantic bg music</span>
+                    <button id="toggleMusicBtn">🔊 ON</button>
+                </div>
+                <div class="toggle-audio">
+                    <span>⌨️ Typing sound</span>
+                    <button id="toggleTypingSoundBtn">🔊 ON</button>
+                </div>
+                <button id="resetProgressBtn">🔄 Reset story progress</button>
+                <button id="backFromSettings" style="margin-top: 24px;">🏠 Home</button>
+                <p style="margin-top: 16px;">Progress saved automatically ❤️</p>
+            </div>
+
+            <div id="finalMessageContainer" style="margin-top: 16px;"></div>
+        </div>
     </div>
 
     <script src="script.js"></script>
