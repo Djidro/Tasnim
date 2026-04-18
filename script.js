@@ -8,12 +8,12 @@
         "I fall for you again and again.", "You're the heart of my game.",
         "Tasnim, you make life magical ✨"
     ];
-  const memories = [
+const memories = [
     { 
         type: "video",
         title: "🌟 A Song for You", 
         full: "This melody reminds me of the peace you bring.",
-        videoId: "oLGeMfnNP5g" // First YouTube Shorts ID
+        videoId: "oLGeMfnNP5g"
     },
     { 
         type: "image",
@@ -22,16 +22,34 @@
         image: "gallery-1.jpg"
     },
     { 
-        type: "video",
-        title: "💫 Our Beautiful World", 
-        full: "Every scene in this reminds me of our dreams together.",
-        videoId: "mKZUeGkqtEQ" // Second YouTube Shorts ID
-    },
-    { 
         type: "image",
         title: "🌙 Late night talks", 
         full: "We talked until 3am about stars and dreams. I felt so close to you.",
-        image: "IMG_9813.png"
+        image: "gallery-2.jpg"
+    },
+    { 
+        type: "video",
+        title: "💫 Our Beautiful World", 
+        full: "Every scene in this reminds me of our dreams together.",
+        videoId: "mKZUeGkqtEQ"
+    },
+    { 
+        type: "image",
+        title: "📸 First photo together", 
+        full: "Awkward but perfect. I still look at it when I miss you.",
+        image: "gallery-3.jpg"
+    },
+    { 
+        type: "image",
+        title: "🌸 Beautiful you", 
+        full: "Every picture of you becomes my new favorite.",
+        image: "gallery-4.jpg"
+    },
+    { 
+        type: "image",
+        title: "🕊️ My favorite memory", 
+        full: "This moment is forever saved in my heart.",
+        image: "gallery-5.jpg"
     }
 ];
     // ----- game state ------
