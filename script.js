@@ -270,11 +270,12 @@
         const dayIndex = new Date().getDate() % messages.length;
         document.getElementById('dailyMessageDisplay').innerText = messages[dayIndex] + ' ❤️';
     }
-
-    // ----- MEMORY GALLERY -----
-    function renderMemoryGallery() {
+function renderMemoryGallery() {
     const grid = document.getElementById('memoryGrid');
+    const expandedDiv = document.getElementById('expandedMemory');
     grid.innerHTML = '';
+    expandedDiv.innerHTML = ''; // Clear expanded area
+    
     memories.forEach((mem, i) => {
         const card = document.createElement('div'); 
         card.className = 'memory-card';
@@ -300,14 +301,49 @@
         card.appendChild(titleSpan);
         
         card.addEventListener('click', () => {
-            const expandedDiv = document.getElementById('expandedMemory');
-            let expandedContent = `<div style="display: flex; gap: 16px; align-items: start;">`;
+            // Create full-size image display
+            let expandedContent = `
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button onclick="this.parentElement.parentElement.parentElement.innerHTML=''" 
+                                style="padding: 8px 16px; font-size: 14px; background: #ffb0c3;">
+                            ✕ Close
+                        </button>
+                    </div>
+            `;
+            
             if (mem.image) {
-                expandedContent += `<img src="${mem.image}" alt="${mem.title}" style="width: 120px; height: 120px; object-fit: cover; border-radius: 20px;">`;
+                expandedContent += `
+                    <img src="${mem.image}" 
+                         alt="${mem.title}" 
+                         style="width: 100%; 
+                                max-height: 400px; 
+                                object-fit: contain; 
+                                border-radius: 20px;
+                                border: 3px solid #ffb0c3;
+                                box-shadow: 0 8px 20px rgba(210, 100, 130, 0.3);
+                                cursor: zoom-out;"
+                         onclick="this.requestFullscreen()">
+                `;
             }
-            expandedContent += `<div style="flex:1;"><strong>${mem.title}</strong><br>💬 ${mem.full}</div></div>`;
+            
+            expandedContent += `
+                    <div style="padding: 16px; background: #fff0f7; border-radius: 20px;">
+                        <strong style="font-size: 1.2rem;">${mem.title}</strong>
+                        <p style="margin-top: 8px; font-size: 1.1rem;">💬 ${mem.full}</p>
+                        <p style="margin-top: 12px; font-size: 0.9rem; color: #8f3f60;">
+                            💡 Click the image to view fullscreen
+                        </p>
+                    </div>
+                </div>
+            `;
+            
             expandedDiv.innerHTML = expandedContent;
+            
+            // Scroll to expanded image
+            expandedDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
+        
         grid.appendChild(card);
     });
 }
