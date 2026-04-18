@@ -36,19 +36,19 @@ const memories = [
     { 
         type: "image",
         title: "📸 First photo together", 
-        full: "Awkward but perfect. I still look at it when I miss you.",
+        full: ".Our first image together—simple, but the start of something truly special for me.",
         image: "gallery-3.jpg"
     },
     { 
         type: "image",
         title: "🌸 Beautiful you", 
-        full: "Every picture of you becomes my new favorite.",
+        full: "My life, my story, my memories—summed up in one photo.",
         image: "gallery-4.jpg"
     },
     { 
         type: "image",
-        title: "🕊️ My favorite memory", 
-        full: "This moment is forever saved in my heart.",
+        title: "🕊️ Chilhood", 
+        full: "From kids to growing up together, and hoping to stay together forever.",
         image: "gallery-5.jpg"
     }
 ];
