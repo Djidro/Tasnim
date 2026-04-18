@@ -16,25 +16,27 @@
         mainApp.classList.add('visible');
     }
 
-    function attemptLogin() {
-        const entered = passwordInput.value.trim();
-        if (entered === CORRECT_PASSWORD) {
-            sessionStorage.setItem('lovequest_auth', 'true');
-            loginOverlay.classList.add('hidden');
-            mainApp.classList.add('visible');
-            loginError.textContent = '';
-            
-            // Initialize game after successful login
+ function attemptLogin() {
+    const entered = passwordInput.value.trim();
+    if (entered === CORRECT_PASSWORD) {
+        sessionStorage.setItem('lovequest_auth', 'true');
+        loginOverlay.classList.add('hidden');
+        mainApp.classList.add('visible');
+        loginError.textContent = '';
+        
+        // Initialize game after successful login (only once!)
+        setTimeout(() => {
             if (!window._gameInitialized) {
                 initGameApp();
                 window._gameInitialized = true;
             }
-        } else {
-            loginError.textContent = '❌ Incorrect password';
-            passwordInput.value = '';
-            passwordInput.focus();
-        }
+        }, 50);
+    } else {
+        loginError.textContent = '❌ Incorrect password';
+        passwordInput.value = '';
+        passwordInput.focus();
     }
+}
 
     loginBtn.addEventListener('click', attemptLogin);
     passwordInput.addEventListener('keypress', (e) => {
@@ -44,11 +46,18 @@
         }
     });
 
-    // If already logged in, initialize game immediately
-    if (sessionStorage.getItem('lovequest_auth') === 'true') {
-        initGameApp();
-        window._gameInitialized = true;
-    }
+  // If already logged in, initialize game immediately (ONLY ONCE)
+if (sessionStorage.getItem('lovequest_auth') === 'true') {
+    loginOverlay.classList.add('hidden');
+    mainApp.classList.add('visible');
+    // Wait for DOM to be fully ready before initializing
+    setTimeout(() => {
+        if (!window._gameInitialized) {
+            initGameApp();
+            window._gameInitialized = true;
+        }
+    }, 50);
+}
 
     /* ************************************************************ */
     /* 🔧 EDIT SECTION 1: CUSTOMIZE YOUR GIRLFRIEND'S INFO           */
