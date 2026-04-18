@@ -367,7 +367,12 @@ function renderMemoryGallery() {
     document.getElementById('goSettingsBtn').addEventListener('click',()=>showScreen('settings'));
     document.querySelectorAll('[id^="backFrom"]').forEach(b=>b.addEventListener('click',()=>{ stopMiniGame(); showScreen('home'); }));
     document.getElementById('missMeBtn').addEventListener('click',()=>showPopup("I miss you every second, Tasnim ❤️"));
-    document.getElementById('whatsappBtn').addEventListener('click',()=>{ window.open(`https://wa.me/?text=I%20just%20played%20your%20game%20and%20I%20love%20it%20%E2%9D%A4%EF%B8%8F%20-%20${girlfriendName}`); });
+    document.getElementById('whatsappBtn').addEventListener('click',()=>{ 
+    const phoneNumber = "96878440900"; // Your WhatsApp number
+    const message = `Hey! I just played your Love Quest game and I love it! ❤️ - ${girlfriendName}`;
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+});
     document.getElementById('toggleMusicBtn').addEventListener('click',()=>{ musicEnabled=!musicEnabled; updateAudioUI(); saveProgress(); });
     document.getElementById('toggleTypingSoundBtn').addEventListener('click',()=>{ typingSoundEnabled=!typingSoundEnabled; updateAudioUI(); saveProgress(); });
     document.getElementById('resetProgressBtn').addEventListener('click',()=>{ storyUnlocked=1; storyLevel=1; saveProgress(); showPopup('Progress reset, but love remains ❤️'); });
