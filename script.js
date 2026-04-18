@@ -10,21 +10,29 @@
     ];
   const memories = [
     { 
-        title: "🌟 First time I thought about you", 
-        full: "It was a random Tuesday, and you stayed in my mind like a beautiful song.",
-        image: "gallery-1.jpg"  // ← Remove "images/"
+        type: "video",
+        title: "🌟 A Song for You", 
+        full: "This melody reminds me of the peace you bring.",
+        videoId: "oLGeMfnNP5g" // First YouTube Shorts ID
     },
     { 
+        type: "image",
         title: "💫 The moment you made me smile", 
         full: "When you laughed at my silly joke — I knew I wanted to hear it forever.",
-        image: "gallery-2.jpg"  // ← Remove "images/"
+        image: "gallery-1.jpg"
     },
     { 
+        type: "video",
+        title: "💫 Our Beautiful World", 
+        full: "Every scene in this reminds me of our dreams together.",
+        videoId: "mKZUeGkqtEQ" // Second YouTube Shorts ID
+    },
+    { 
+        type: "image",
         title: "🌙 Late night talks", 
         full: "We talked until 3am about stars and dreams. I felt so close to you.",
-        image: "IMG_9813.png"   // ← Use your actual file name
-    },
-    // Remove the fourth one or add another image
+        image: "IMG_9813.png"
+    }
 ];
     // ----- game state ------
     let currentScreen = 'home';
@@ -271,81 +279,66 @@
         document.getElementById('dailyMessageDisplay').innerText = messages[dayIndex] + ' ❤️';
     }
 function renderMemoryGallery() {
-    const grid = document.getElementById('memoryGrid');
-    const expandedDiv = document.getElementById('expandedMemory');
-    grid.innerHTML = '';
-    expandedDiv.innerHTML = ''; // Clear expanded area
+    const container = document.getElementById('videoReelContainer');
+    if (!container) return;
     
-    memories.forEach((mem, i) => {
-        const card = document.createElement('div'); 
-        card.className = 'memory-card';
+    container.innerHTML = ''; // Clear previous content
+    
+    memories.forEach((mem) => {
+        const card = document.createElement('div');
+        card.className = 'video-card';
         
-        // Add image to card
-        if (mem.image) {
+        if (mem.type === "video" && mem.videoId) {
+            // Create YouTube iframe for video
+            const iframe = document.createElement('iframe');
+            iframe.width = "100%";
+            iframe.height = "100%";
+            iframe.src = `https://www.youtube.com/embed/${mem.videoId}?autoplay=0&mute=1&controls=1&loop=1&playlist=${mem.videoId}&modestbranding=1&rel=0&showinfo=0`;
+            iframe.title = mem.title;
+            iframe.frameBorder = "0";
+            iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+            iframe.allowFullscreen = true;
+            iframe.style.aspectRatio = "9 / 16";
+            iframe.style.objectFit = "cover";
+            
+            card.appendChild(iframe);
+        } else if (mem.type === "image" && mem.image) {
+            // Create image element
             const img = document.createElement('img');
             img.src = mem.image;
             img.alt = mem.title;
-            img.style.width = '100%';
-            img.style.height = '120px';
-            img.style.objectFit = 'cover';
-            img.style.borderRadius = '16px';
-            img.style.marginBottom = '8px';
+            img.style.width = "100%";
+            img.style.height = "100%";
+            img.style.aspectRatio = "9 / 16";
+            img.style.objectFit = "cover";
+            img.style.cursor = "pointer";
+            
+            // Add click to fullscreen for images
+            img.addEventListener('click', () => {
+                if (img.requestFullscreen) {
+                    img.requestFullscreen();
+                }
+            });
+            
             card.appendChild(img);
         }
         
-        // Add title
-        const titleSpan = document.createElement('span');
-        titleSpan.textContent = mem.title;
-        titleSpan.style.display = 'block';
-        titleSpan.style.fontWeight = '600';
-        card.appendChild(titleSpan);
+        // Create overlay for text (applies to both video and image)
+        const overlay = document.createElement('div');
+        overlay.className = 'video-overlay';
+        overlay.innerHTML = `
+            <div class="video-title">${mem.title}</div>
+            <div class="video-description">💬 ${mem.full}</div>
+        `;
+        card.appendChild(overlay);
         
-        card.addEventListener('click', () => {
-            // Create full-size image display
-            let expandedContent = `
-                <div style="display: flex; flex-direction: column; gap: 16px;">
-                    <div style="display: flex; justify-content: flex-end;">
-                        <button onclick="this.parentElement.parentElement.parentElement.innerHTML=''" 
-                                style="padding: 8px 16px; font-size: 14px; background: #ffb0c3;">
-                            ✕ Close
-                        </button>
-                    </div>
-            `;
-            
-            if (mem.image) {
-                expandedContent += `
-                    <img src="${mem.image}" 
-                         alt="${mem.title}" 
-                         style="width: 100%; 
-                                max-height: 400px; 
-                                object-fit: contain; 
-                                border-radius: 20px;
-                                border: 3px solid #ffb0c3;
-                                box-shadow: 0 8px 20px rgba(210, 100, 130, 0.3);
-                                cursor: zoom-out;"
-                         onclick="this.requestFullscreen()">
-                `;
-            }
-            
-            expandedContent += `
-                    <div style="padding: 16px; background: #fff0f7; border-radius: 20px;">
-                        <strong style="font-size: 1.2rem;">${mem.title}</strong>
-                        <p style="margin-top: 8px; font-size: 1.1rem;">💬 ${mem.full}</p>
-                        <p style="margin-top: 12px; font-size: 0.9rem; color: #8f3f60;">
-                            💡 Click the image to view fullscreen
-                        </p>
-                    </div>
-                </div>
-            `;
-            
-            expandedDiv.innerHTML = expandedContent;
-            
-            // Scroll to expanded image
-            expandedDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        });
-        
-        grid.appendChild(card);
+        container.appendChild(card);
     });
+    
+    // Fallback message if no memories are configured
+    if (memories.length === 0) {
+        container.innerHTML = '<p style="text-align: center; padding: 40px;">✨ Beautiful memories coming soon... ✨</p>';
+    }
 }
     // ----- AUDIO (Web Audio)-----
     function playBgMusic(){ /* soft oscillator not included for brevity, but we use simple oscillator if allowed */ }
