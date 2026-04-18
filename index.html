@@ -32,7 +32,7 @@
 
         <!-- STORY MODE SCREEN -->
         <div id="storyScreen" class="screen">
-            <h2>📖 Story · <span id="levelIndicator">Level 1/5</span></h2>
+            <h2>📖 Story · <span id="levelIndicator">Chapter 1</span></h2>
             <div class="story-box">
                 <div id="storyDialogue" class="dialogue">✨ ...</div>
                 <div id="storyChoices" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
@@ -59,17 +59,21 @@
 
         <!-- DAILY LOVE SCREEN -->
         <div id="dailyScreen" class="screen">
-            <h2>📅 Today's love note</h2>
+            <h2>💌 Love Message For You</h2>
             <div style="background: #fff0f7dd; border-radius: 48px; padding: 30px; margin: 20px 0; text-align: center; font-size: 1.5rem;" id="dailyMessageDisplay"></div>
-            <button id="backFromDaily">🏠 Home</button>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="refreshDailyBtn">💫 New Message</button>
+                <button id="backFromDaily">🏠 Home</button>
+            </div>
         </div>
 
-    <!-- MEMORY GALLERY -->
-<div id="galleryScreen" class="screen">
-    <h2>🕊️ Our little moments</h2>
-    <div id="videoReelContainer" class="video-reel-container"></div>
-    <button id="backFromGallery" style="margin-top: 20px;">🏠 Home</button>
-</div>
+        <!-- MEMORY GALLERY -->
+        <div id="galleryScreen" class="screen">
+            <h2>🕊️ Our little moments</h2>
+            <div id="videoReelContainer" class="video-reel-container"></div>
+            <button id="backFromGallery" style="margin-top: 20px;">🏠 Home</button>
+        </div>
+        
         <!-- SETTINGS SCREEN -->
         <div id="settingsScreen" class="screen">
             <h2>⚙️ Settings & love</h2>
