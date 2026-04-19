@@ -10,18 +10,30 @@
     <!-- floating hearts background -->
     <canvas id="heart-particle-canvas"></canvas>
 
-    <!-- ========== PASSWORD PROTECTION OVERLAY ========= -->
-    <div id="loginOverlay">
-        <div class="login-card">
-            <h2>🔐💗</h2>
-            <p style="font-size: 1.3rem; margin-bottom: 8px;">Only for Tasnim</p>
-            <p style="margin-bottom: 20px;">Enter our special date ✨</p>
-            <input type="password" id="passwordInput" class="login-input" placeholder="••••••" autocomplete="off" inputmode="text">
-            <button class="login-btn" id="loginBtn">Unlock my heart ❤️</button>
-            <div id="loginError" class="error-message"></div>
-            <div class="hint-note">💫 our forever date</div>
-        </div>
+<!-- ========== PASSWORD PROTECTION OVERLAY ========= -->
+<div id="loginOverlay">
+    <!-- ADD THIS RINGS CONTAINER RIGHT HERE -->
+    <div class="rings-container">
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+        <div class="ring ring-3"></div>
+        <div class="ring ring-4"></div>
+        <div class="ring ring-5"></div>
+        <div class="ring ring-6"></div>
+        <div class="ring ring-7"></div>
+        <div class="ring ring-8"></div>
     </div>
+    
+    <div class="login-card">
+        <h2>🔐💗</h2>
+        <p style="font-size: 1.3rem; margin-bottom: 8px;">Only for Tasnim</p>
+        <p style="margin-bottom: 20px;">Enter our special date ✨</p>
+        <input type="password" id="passwordInput" class="login-input" placeholder="••••••" autocomplete="off" inputmode="text">
+        <button class="login-btn" id="loginBtn">Unlock my heart ❤️</button>
+        <div id="loginError" class="error-message"></div>
+        <div class="hint-note">💫 our forever date</div>
+    </div>
+</div>
 
     <!-- ========== MAIN WEBSITE (hidden until correct password) ========= -->
     <div id="mainApp">
