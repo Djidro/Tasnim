@@ -752,4 +752,82 @@ if (sessionStorage.getItem('lovequest_auth') === 'true') {
         }
         drawParticles();
     }
+// ----- FLOATING RINGS (Performance Optimized) -----
+(function createFloatingRings() {
+    // Only create rings if login overlay exists
+    const loginOverlay = document.getElementById('loginOverlay');
+    if (!loginOverlay) return;
+    
+    // Check if rings already exist
+    if (document.querySelector('.rings-container')) return;
+    
+    // Create container for rings
+    const ringsContainer = document.createElement('div');
+    ringsContainer.className = 'rings-container';
+    loginOverlay.appendChild(ringsContainer);
+    
+    // Use DocumentFragment for better performance
+    const fragment = document.createDocumentFragment();
+    
+    // Create 8 rings with different sizes and positions
+    for (let i = 1; i <= 8; i++) {
+        const ring = document.createElement('div');
+        ring.className = `ring ring-${i}`;
+        fragment.appendChild(ring);
+    }
+    
+    ringsContainer.appendChild(fragment);
+    
+    // Performance optimization: Pause animations when page is not visible
+    const handleVisibilityChange = () => {
+        const rings = document.querySelectorAll('.ring');
+        if (document.hidden) {
+            rings.forEach(ring => {
+                ring.style.animationPlayState = 'paused';
+            });
+        } else {
+            rings.forEach(ring => {
+                ring.style.animationPlayState = 'running';
+            });
+        }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Clean up rings when login is successful (optional - removes rings after unlock)
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                if (loginOverlay.classList.contains('hidden')) {
+                    // Fade out and remove rings after login
+                    const rings = document.querySelectorAll('.ring');
+                    rings.forEach(ring => {
+                        ring.style.transition = 'opacity 0.5s ease';
+                        ring.style.opacity = '0';
+                    });
+                    
+                    setTimeout(() => {
+                        const container = document.querySelector('.rings-container');
+                        if (container) {
+                            container.remove();
+                            document.removeEventListener('visibilitychange', handleVisibilityChange);
+                            observer.disconnect();
+                        }
+                    }, 500);
+                }
+            }
+        });
+    });
+    
+    observer.observe(loginOverlay, { attributes: true });
+    
+    // Add smooth fade-in for rings
+    setTimeout(() => {
+        const rings = document.querySelectorAll('.ring');
+        rings.forEach((ring, index) => {
+            ring.style.transition = 'opacity 0.8s ease';
+            ring.style.opacity = '1';
+        });
+    }, 100);
+})();
 })();
