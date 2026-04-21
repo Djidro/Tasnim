@@ -16,27 +16,27 @@
         mainApp.classList.add('visible');
     }
 
- function attemptLogin() {
-    const entered = passwordInput.value.trim();
-    if (entered === CORRECT_PASSWORD) {
-        sessionStorage.setItem('lovequest_auth', 'true');
-        loginOverlay.classList.add('hidden');
-        mainApp.classList.add('visible');
-        loginError.textContent = '';
-        
-        // Initialize game after successful login (only once!)
-        setTimeout(() => {
-            if (!window._gameInitialized) {
-                initGameApp();
-                window._gameInitialized = true;
-            }
-        }, 50);
-    } else {
-        loginError.textContent = '❌ Incorrect password';
-        passwordInput.value = '';
-        passwordInput.focus();
+    function attemptLogin() {
+        const entered = passwordInput.value.trim();
+        if (entered === CORRECT_PASSWORD) {
+            sessionStorage.setItem('lovequest_auth', 'true');
+            loginOverlay.classList.add('hidden');
+            mainApp.classList.add('visible');
+            loginError.textContent = '';
+            
+            // Initialize game after successful login (only once!)
+            setTimeout(() => {
+                if (!window._gameInitialized) {
+                    initGameApp();
+                    window._gameInitialized = true;
+                }
+            }, 50);
+        } else {
+            loginError.textContent = '❌ Incorrect password';
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
     }
-}
 
     loginBtn.addEventListener('click', attemptLogin);
     passwordInput.addEventListener('keypress', (e) => {
@@ -46,18 +46,18 @@
         }
     });
 
-  // If already logged in, initialize game immediately (ONLY ONCE)
-if (sessionStorage.getItem('lovequest_auth') === 'true') {
-    loginOverlay.classList.add('hidden');
-    mainApp.classList.add('visible');
-    // Wait for DOM to be fully ready before initializing
-    setTimeout(() => {
-        if (!window._gameInitialized) {
-            initGameApp();
-            window._gameInitialized = true;
-        }
-    }, 50);
-}
+    // If already logged in, initialize game immediately (ONLY ONCE)
+    if (sessionStorage.getItem('lovequest_auth') === 'true') {
+        loginOverlay.classList.add('hidden');
+        mainApp.classList.add('visible');
+        // Wait for DOM to be fully ready before initializing
+        setTimeout(() => {
+            if (!window._gameInitialized) {
+                initGameApp();
+                window._gameInitialized = true;
+            }
+        }, 50);
+    }
 
     /* ************************************************************ */
     /* 🔧 EDIT SECTION 1: CUSTOMIZE YOUR GIRLFRIEND'S INFO           */
@@ -238,6 +238,7 @@ if (sessionStorage.getItem('lovequest_auth') === 'true') {
             mini: document.getElementById('miniGameScreen'),
             daily: document.getElementById('dailyScreen'),
             gallery: document.getElementById('galleryScreen'),
+            future: document.getElementById('futureScreen'),
             settings: document.getElementById('settingsScreen')
         };
         welcomeMsg = document.getElementById('welcomeMessage');
@@ -258,6 +259,7 @@ if (sessionStorage.getItem('lovequest_auth') === 'true') {
             if (screenId === 'daily') generateDailyMessage();
             if (screenId === 'gallery') renderMemoryGallery();
             if (screenId === 'story') loadStoryChapter(currentStoryChapter);
+            if (screenId === 'future') renderFuturePlans();
         }
 
         // ----- LOCALSTORAGE -----
@@ -707,14 +709,539 @@ if (sessionStorage.getItem('lovequest_auth') === 'true') {
         
         loadProgress();
         updateAudioUI();
-        
-        setTimeout(()=>{ 
+
+        // ----- OUR FUTURE PLANNER SYSTEM -----
+        let futurePlans = [];
+        let countdownIntervals = new Map();
+        const STORAGE_KEY = 'loveQuest_futurePlans';
+
+        // Load saved plans from localStorage
+        function loadFuturePlans() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    futurePlans = JSON.parse(saved);
+                } catch(e) {
+                    console.log('Error loading future plans:', e);
+                    futurePlans = [];
+                }
+            }
+            futurePlans.sort((a, b) => new Date(a.date) - new Date(b.date));
+        }
+
+        // Save plans to localStorage
+        function saveFuturePlans() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(futurePlans));
+        }
+
+        // Format countdown time
+        function formatCountdown(targetDate) {
+            const now = new Date();
+            const target = new Date(targetDate);
+            const diff = target - now;
+            
+            if (diff <= 0) {
+                return { reached: true, days: 0, hours: 0, minutes: 0, seconds: 0 };
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            return { reached: false, days, hours, minutes, seconds };
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Create a plan card element
+        function createPlanCard(plan, index) {
+            const card = document.createElement('div');
+            card.className = 'plan-card';
+            card.dataset.planId = plan.id;
+            
+            const header = document.createElement('div');
+            header.className = 'plan-header';
+            header.innerHTML = `
+                <h3 class="plan-title">${escapeHtml(plan.title)}</h3>
+                <span class="plan-author">${escapeHtml(plan.author)}</span>
+            `;
+            
+            const desc = document.createElement('div');
+            desc.className = 'plan-description';
+            desc.textContent = plan.description || 'No description';
+            
+            const countdownDiv = document.createElement('div');
+            countdownDiv.className = 'plan-countdown';
+            countdownDiv.id = `countdown-${plan.id}`;
+            
+            const footer = document.createElement('div');
+            footer.className = 'plan-footer';
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'plan-delete-btn';
+            deleteBtn.textContent = '🗑️ Remove';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deletePlan(plan.id);
+            });
+            footer.appendChild(deleteBtn);
+            
+            card.appendChild(header);
+            card.appendChild(desc);
+            card.appendChild(countdownDiv);
+            card.appendChild(footer);
+            
+            startCountdown(plan.id, plan.date, countdownDiv);
+            
+            return card;
+        }
+
+        // Start countdown timer for a plan
+        function startCountdown(planId, targetDate, element) {
+            if (countdownIntervals.has(planId)) {
+                clearInterval(countdownIntervals.get(planId));
+            }
+            
+            const updateCountdown = () => {
+                const timeData = formatCountdown(targetDate);
+                
+                if (timeData.reached) {
+                    element.innerHTML = `
+                        <div class="countdown-reached">
+                            ✨ Today is the moment ❤️ ✨
+                        </div>
+                    `;
+                    if (countdownIntervals.has(planId)) {
+                        clearInterval(countdownIntervals.get(planId));
+                        countdownIntervals.delete(planId);
+                    }
+                } else {
+                    element.innerHTML = `
+                        <div class="countdown-display">
+                            <div class="countdown-unit">
+                                <span class="countdown-number">${timeData.days}</span>
+                                <span class="countdown-label">Days</span>
+                            </div>
+                            <div class="countdown-unit">
+                                <span class="countdown-number">${String(timeData.hours).padStart(2, '0')}</span>
+                                <span class="countdown-label">Hours</span>
+                            </div>
+                            <div class="countdown-unit">
+                                <span class="countdown-number">${String(timeData.minutes).padStart(2, '0')}</span>
+                                <span class="countdown-label">Mins</span>
+                            </div>
+                            <div class="countdown-unit">
+                                <span class="countdown-number">${String(timeData.seconds).padStart(2, '0')}</span>
+                                <span class="countdown-label">Secs</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            };
+            
+            updateCountdown();
+            const interval = setInterval(updateCountdown, 1000);
+            countdownIntervals.set(planId, interval);
+        }
+
+        // Render all plans
+        function renderFuturePlans() {
+            const container = document.getElementById('futurePlansContainer');
+            const emptyState = document.getElementById('emptyFutureState');
+            
+            if (!container) return;
+            
+            countdownIntervals.forEach((interval) => clearInterval(interval));
+            countdownIntervals.clear();
+            
+            const children = Array.from(container.children);
+            children.forEach(child => {
+                if (child.id !== 'emptyFutureState') {
+                    child.remove();
+                }
+            });
+            
+            if (futurePlans.length === 0) {
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+                futurePlans.sort((a, b) => new Date(a.date) - new Date(b.date));
+                futurePlans.forEach((plan, index) => {
+                    const card = createPlanCard(plan, index);
+                    container.insertBefore(card, emptyState);
+                });
+            }
+        }
+
+        // Add a new plan
+        function addFuturePlan(title, description, date, author) {
+            const newPlan = {
+                id: Date.now() + Math.random().toString(36).substr(2, 9),
+                title: title.trim(),
+                description: description.trim(),
+                date: date,
+                author: author,
+                createdAt: new Date().toISOString()
+            };
+            
+            futurePlans.push(newPlan);
+            saveFuturePlans();
+            renderFuturePlans();
+            showPopup(`✨ New plan added to your future together!`);
+        }
+
+        // Delete a plan
+        function deletePlan(planId) {
+            const plan = futurePlans.find(p => p.id === planId);
+            if (!plan) return;
+            
+            if (countdownIntervals.has(planId)) {
+                clearInterval(countdownIntervals.get(planId));
+                countdownIntervals.delete(planId);
+            }
+            
+            futurePlans = futurePlans.filter(p => p.id !== planId);
+            saveFuturePlans();
+            renderFuturePlans();
+            showPopup(`Plan removed`);
+        }
+
+        // Initialize Future Planner
+        function initFuturePlanner() {
+            loadFuturePlans();
+            
+            const dateInput = document.getElementById('planDate');
+            if (dateInput) {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+                dateInput.min = minDateTime;
+                dateInput.value = minDateTime;
+            }
+            
+            const authorBtns = document.querySelectorAll('.author-btn');
+            let selectedAuthor = 'Me ❤️';
+            
+            authorBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    authorBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedAuthor = this.dataset.author;
+                });
+            });
+            
+            const addBtn = document.getElementById('addPlanBtn');
+            if (addBtn) {
+                addBtn.addEventListener('click', function() {
+                    const titleInput = document.getElementById('planTitle');
+                    const descInput = document.getElementById('planDescription');
+                    const dateInput = document.getElementById('planDate');
+                    
+                    const title = titleInput.value.trim();
+                    const description = descInput.value.trim();
+                    const date = dateInput.value;
+                    
+                    if (!title) {
+                        showPopup('Please add a title for your plan 💭');
+                        titleInput.focus();
+                        return;
+                    }
+                    
+                    if (!date) {
+                        showPopup('When are we planning this? 📅');
+                        dateInput.focus();
+                        return;
+                    }
+                    
+                    addFuturePlan(title, description, date, selectedAuthor);
+                    
+                    titleInput.value = '';
+                    descInput.value = '';
+                    
+                    const now = new Date();
+                    now.setHours(now.getHours() + 1);
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    dateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                    
+                    titleInput.focus();
+                });
+            }
+            
+            renderFuturePlans();
+        }
+
+        // Navigation for Future Screen
+        const goFutureBtn = document.getElementById('goFutureBtn');
+        if (goFutureBtn) {
+            goFutureBtn.addEventListener('click', () => showScreen('future'));
+        }
+
+        const backFromFuture = document.getElementById('backFromFuture');
+        if (backFromFuture) {
+            backFromFuture.addEventListener('click', () => showScreen('home'));
+        }
+
+        initFuturePlanner();
+div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Create a plan card element
+        function createPlanCard(plan, index) {
+            const card = document.createElement('div');
+            card.className = 'plan-card';
+            card.dataset.planId = plan.id;
+            
+            const header = document.createElement('div');
+            header.className = 'plan-header';
+            header.innerHTML = `
+                <h3 class="plan-title">${escapeHtml(plan.title)}</h3>
+                <span class="plan-author">${escapeHtml(plan.author)}</span>
+            `;
+            
+            const desc = document.createElement('div');
+            desc.className = 'plan-description';
+            desc.textContent = plan.description || 'No description';
+            
+            const countdownDiv = document.createElement('div');
+            countdownDiv.className = 'plan-countdown';
+            countdownDiv.id = `countdown-${plan.id}`;
+            
+            const footer = document.createElement('div');
+            footer.className = 'plan-footer';
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'plan-delete-btn';
+            deleteBtn.textContent = '🗑️ Remove';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deletePlan(plan.id);
+            });
+            footer.appendChild(deleteBtn);
+            
+            card.appendChild(header);
+            card.appendChild(desc);
+            card.appendChild(countdownDiv);
+            card.appendChild(footer);
+            
+            startCountdown(plan.id, plan.date, countdownDiv);
+            
+            return card;
+        }
+
+        // Start countdown timer for a plan
+        function startCountdown(planId, targetDate, element) {
+            if (countdownIntervals.has(planId)) {
+                clearInterval(countdownIntervals.get(planId));
+            }
+            
+            const updateCountdown = () => {
+                const timeData = formatCountdown(targetDate);
+                
+                if (timeData.reached) {
+                    element.innerHTML = `
+                        <div class="countdown-reached">
+                            ✨ Today is the moment ❤️ ✨
+                        </div>
+                    `;
+                    if (countdownIntervals.has(planId)) {
+                        clearInterval(countdownIntervals.get(planId));
+                        countdownIntervals.delete(planId);
+                    }
+                } else {
+                    element.innerHTML = `
+                        <div class="countdown-display">
+                            <div class="countdown-unit">
+                                <span class="countdown-number">${timeData.days}</span>
+                                <span class="countdown-label">Days</span>
+                            </div>
+                            <div class="countdown-unit">
+                                <span class="countdown-number">${String(timeData.hours).padStart(2, '0')}</span>
+                                <span class="countdown-label">Hours</span>
+                            </div>
+                            <div class="countdown-unit">
+                                <span class="countdown-number">${String(timeData.minutes).padStart(2, '0')}</span>
+                                <span class="countdown-label">Mins</span>
+                            </div>
+                            <div class="countdown-unit">
+                                <span class="countdown-number">${String(timeData.seconds).padStart(2, '0')}</span>
+                                <span class="countdown-label">Secs</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            };
+            
+            updateCountdown();
+            const interval = setInterval(updateCountdown, 1000);
+            countdownIntervals.set(planId, interval);
+        }
+
+        // Render all plans
+        function renderFuturePlans() {
+            const container = document.getElementById('futurePlansContainer');
+            const emptyState = document.getElementById('emptyFutureState');
+            
+            if (!container) return;
+            
+            countdownIntervals.forEach((interval) => clearInterval(interval));
+            countdownIntervals.clear();
+            
+            const children = Array.from(container.children);
+            children.forEach(child => {
+                if (child.id !== 'emptyFutureState') {
+                    child.remove();
+                }
+            });
+            
+            if (futurePlans.length === 0) {
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+                futurePlans.sort((a, b) => new Date(a.date) - new Date(b.date));
+                futurePlans.forEach((plan, index) => {
+                    const card = createPlanCard(plan, index);
+                    container.insertBefore(card, emptyState);
+                });
+            }
+        }
+
+        // Add a new plan
+        function addFuturePlan(title, description, date, author) {
+            const newPlan = {
+                id: Date.now() + Math.random().toString(36).substr(2, 9),
+                title: title.trim(),
+                description: description.trim(),
+                date: date,
+                author: author,
+                createdAt: new Date().toISOString()
+            };
+            
+            futurePlans.push(newPlan);
+            saveFuturePlans();
+            renderFuturePlans();
+            showPopup(`✨ New plan added to your future together!`);
+        }
+
+        // Delete a plan
+        function deletePlan(planId) {
+            const plan = futurePlans.find(p => p.id === planId);
+            if (!plan) return;
+            
+            if (countdownIntervals.has(planId)) {
+                clearInterval(countdownIntervals.get(planId));
+                countdownIntervals.delete(planId);
+            }
+            
+            futurePlans = futurePlans.filter(p => p.id !== planId);
+            saveFuturePlans();
+            renderFuturePlans();
+            showPopup(`Plan removed`);
+        }
+
+        // Initialize Future Planner
+        function initFuturePlanner() {
+            loadFuturePlans();
+            
+            const dateInput = document.getElementById('planDate');
+            if (dateInput) {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+                dateInput.min = minDateTime;
+                dateInput.value = minDateTime;
+            }
+            
+            const authorBtns = document.querySelectorAll('.author-btn');
+            let selectedAuthor = 'Me ❤️';
+            
+            authorBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    authorBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedAuthor = this.dataset.author;
+                });
+            });
+            
+            const addBtn = document.getElementById('addPlanBtn');
+            if (addBtn) {
+                addBtn.addEventListener('click', function() {
+                    const titleInput = document.getElementById('planTitle');
+                    const descInput = document.getElementById('planDescription');
+                    const dateInput = document.getElementById('planDate');
+                    
+                    const title = titleInput.value.trim();
+                    const description = descInput.value.trim();
+                    const date = dateInput.value;
+                    
+                    if (!title) {
+                        showPopup('Please add a title for your plan 💭');
+                        titleInput.focus();
+                        return;
+                    }
+                    
+                    if (!date) {
+                        showPopup('When are we planning this? 📅');
+                        dateInput.focus();
+                        return;
+                    }
+                    
+                    addFuturePlan(title, description, date, selectedAuthor);
+                    
+                    titleInput.value = '';
+                    descInput.value = '';
+                    
+                    const now = new Date();
+                    now.setHours(now.getHours() + 1);
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    dateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                    
+                    titleInput.focus();
+                });
+            }
+            
+            renderFuturePlans();
+        }
+
+        // Navigation for Future Screen
+        const goFutureBtn = document.getElementById('goFutureBtn');
+        if (goFutureBtn) {
+            goFutureBtn.addEventListener('click', () => showScreen('future'));
+        }
+
+        const backFromFuture = document.getElementById('backFromFuture');
+        if (backFromFuture) {
+            backFromFuture.addEventListener('click', () => showScreen('home'));
+        }
+
+        initFuturePlanner();
+(()=>{ 
             if(currentScreen === 'home') {
                 showPopup(`Hey ${girlfriendName}… I just wanted to remind you I love you ❤️`); 
             }
         }, 1500);
     }
-    
+
     // Particle canvas (always runs)
     const pCanvas = document.getElementById('heart-particle-canvas');
     if (pCanvas) {
@@ -752,82 +1279,75 @@ if (sessionStorage.getItem('lovequest_auth') === 'true') {
         }
         drawParticles();
     }
-// ----- FLOATING RINGS (Performance Optimized) -----
-(function createFloatingRings() {
-    // Only create rings if login overlay exists
-    const loginOverlay = document.getElementById('loginOverlay');
-    if (!loginOverlay) return;
-    
-    // Check if rings already exist
-    if (document.querySelector('.rings-container')) return;
-    
-    // Create container for rings
-    const ringsContainer = document.createElement('div');
-    ringsContainer.className = 'rings-container';
-    loginOverlay.appendChild(ringsContainer);
-    
-    // Use DocumentFragment for better performance
-    const fragment = document.createDocumentFragment();
-    
-    // Create 8 rings with different sizes and positions
-    for (let i = 1; i <= 8; i++) {
-        const ring = document.createElement('div');
-        ring.className = `ring ring-${i}`;
-        fragment.appendChild(ring);
-    }
-    
-    ringsContainer.appendChild(fragment);
-    
-    // Performance optimization: Pause animations when page is not visible
-    const handleVisibilityChange = () => {
-        const rings = document.querySelectorAll('.ring');
-        if (document.hidden) {
-            rings.forEach(ring => {
-                ring.style.animationPlayState = 'paused';
-            });
-        } else {
-            rings.forEach(ring => {
-                ring.style.animationPlayState = 'running';
-            });
+
+    // ----- FLOATING RINGS (Performance Optimized) -----
+    (function createFloatingRings() {
+        const loginOverlay = document.getElementById('loginOverlay');
+        if (!loginOverlay) return;
+        
+        if (document.querySelector('.rings-container')) return;
+        
+        const ringsContainer = document.createElement('div');
+        ringsContainer.className = 'rings-container';
+        loginOverlay.appendChild(ringsContainer);
+        
+        const fragment = document.createDocumentFragment();
+        
+        for (let i = 1; i <= 8; i++) {
+            const ring = document.createElement('div');
+            ring.className = `ring ring-${i}`;
+            fragment.appendChild(ring);
         }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Clean up rings when login is successful (optional - removes rings after unlock)
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                if (loginOverlay.classList.contains('hidden')) {
-                    // Fade out and remove rings after login
-                    const rings = document.querySelectorAll('.ring');
-                    rings.forEach(ring => {
-                        ring.style.transition = 'opacity 0.5s ease';
-                        ring.style.opacity = '0';
-                    });
-                    
-                    setTimeout(() => {
-                        const container = document.querySelector('.rings-container');
-                        if (container) {
-                            container.remove();
-                            document.removeEventListener('visibilitychange', handleVisibilityChange);
-                            observer.disconnect();
-                        }
-                    }, 500);
-                }
+        
+        ringsContainer.appendChild(fragment);
+        
+        const handleVisibilityChange = () => {
+            const rings = document.querySelectorAll('.ring');
+            if (document.hidden) {
+                rings.forEach(ring => {
+                    ring.style.animationPlayState = 'paused';
+                });
+            } else {
+                rings.forEach(ring => {
+                    ring.style.animationPlayState = 'running';
+                });
             }
+        };
+        
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    if (loginOverlay.classList.contains('hidden')) {
+                        const rings = document.querySelectorAll('.ring');
+                        rings.forEach(ring => {
+                            ring.style.transition = 'opacity 0.5s ease';
+                            ring.style.opacity = '0';
+                        });
+                        
+                        setTimeout(() => {
+                            const container = document.querySelector('.rings-container');
+                            if (container) {
+                                container.remove();
+                                document.removeEventListener('visibilitychange', handleVisibilityChange);
+                                observer.disconnect();
+                            }
+                        }, 500);
+                    }
+                }
+            });
         });
-    });
-    
-    observer.observe(loginOverlay, { attributes: true });
-    
-    // Add smooth fade-in for rings
-    setTimeout(() => {
-        const rings = document.querySelectorAll('.ring');
-        rings.forEach((ring, index) => {
-            ring.style.transition = 'opacity 0.8s ease';
-            ring.style.opacity = '1';
-        });
-    }, 100);
-})();
+        
+        observer.observe(loginOverlay, { attributes: true });
+        
+        setTimeout(() => {
+            const rings = document.querySelectorAll('.ring');
+            rings.forEach((ring, index) => {
+                ring.style.transition = 'opacity 0.8s ease';
+                ring.style.opacity = '1';
+            });
+        }, 100);
+    })();
+
 })();
