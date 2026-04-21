@@ -16,12 +16,6 @@
     <div class="rings-container">
         <div class="ring ring-1"></div>
         <div class="ring ring-2"></div>
-        <div class="ring ring-3"></div>
-        <div class="ring ring-4"></div>
-        <div class="ring ring-5"></div>
-        <div class="ring ring-6"></div>
-        <div class="ring ring-7"></div>
-        <div class="ring ring-8"></div>
     </div>
     
     <div class="login-card">
@@ -49,6 +43,8 @@
                     <button id="goMiniGameBtn">🎮 Catch the Hearts</button>
                     <button id="goDailyBtn">💌 Daily Love Message</button>
                     <button id="goGalleryBtn">🖼️ Memory Gallery</button>
+
+<button id="goFutureBtn" class="future-nav-btn">🗓️ Our Future ❤️</button>
                     <button id="goSettingsBtn">⚙️ Settings</button>
                 </div>
                 <div style="margin-top: 28px;">
@@ -99,6 +95,57 @@
                 <h2>🕊️ Our little moments</h2>
                 <div id="videoReelContainer" class="video-reel-container"></div>
                 <button id="backFromGallery" style="margin-top: 20px;">🏠 Home</button>
+            </div>
+<!-- OUR FUTURE PLANNER -->
+            <div id="futureScreen" class="screen">
+                <div class="future-header">
+                    <h2>Our Future ❤️</h2>
+                    <p class="future-intro">A place where our plans live, grow, and slowly become real as time moves forward.</p>
+                </div>
+                
+                <div class="future-form-card">
+                    <div class="form-header">
+                        <span class="form-icon">✨</span>
+                        <h3>Add a new plan</h3>
+                    </div>
+                    
+                    <div class="future-form">
+                        <div class="form-row">
+                            <input type="text" id="planTitle" placeholder="What are we planning?" maxlength="40" class="future-input">
+                        </div>
+                        
+                        <div class="form-row">
+                            <textarea id="planDescription" placeholder="Add a sweet note..." maxlength="120" rows="2" class="future-textarea"></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <label class="form-label">When? 📅</label>
+                            <input type="datetime-local" id="planDate" class="future-input">
+                        </div>
+                        
+                        <div class="form-row">
+                            <label class="form-label">Who's adding this?</label>
+                            <div class="author-selector">
+                                <button type="button" class="author-btn active" data-author="Me ❤️">Me ❤️</button>
+                                <button type="button" class="author-btn" data-author="Her 💕">Her 💕</button>
+                            </div>
+                        </div>
+                        
+                        <button id="addPlanBtn" class="future-add-btn">
+                            <span>➕</span> Add to Our Future
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="futurePlansContainer" class="future-plans-container">
+                    <div class="empty-state" id="emptyFutureState">
+                        <div class="empty-icon">📝</div>
+                        <p>No plans yet...</p>
+                        <p class="empty-subtitle">Add your first plan together!</p>
+                    </div>
+                </div>
+                
+                <button id="backFromFuture" class="future-back-btn">🏠 Back Home</button>
             </div>
 
             <!-- SETTINGS SCREEN -->
