@@ -42,6 +42,7 @@
                     <button id="startStoryBtn">🌸 Story Mode</button>
                     <button id="goMiniGameBtn">🎮 Catch the Hearts</button>
                     <button id="goDailyBtn">💌 Daily Love Message</button>
+<button id="goQuizBtn">💕 Love Compatibility Quiz</button>
                     <button id="goGalleryBtn">🖼️ Memory Gallery</button>
 
 <button id="goFutureBtn" class="future-nav-btn">🗓️ Our Future ❤️</button>
@@ -90,6 +91,67 @@
                 </div>
             </div>
 
+<!-- ========== LOVE QUIZ SCREEN ========= -->
+<div id="quizScreen" class="screen">
+    <h2>💕 Love Quiz</h2>
+    <p style="margin-bottom: 20px; font-style: italic;">Answer 15 questions from the heart...</p>
+    
+    <!-- Quiz Intro -->
+    <div id="quizIntro" class="quiz-intro">
+        <p style="margin-bottom: 20px;">Discover your love compatibility ✨</p>
+        <button id="startQuizBtn" class="quiz-start-btn">💝 Start Love Quiz</button>
+        
+        <!-- Past Results History -->
+        <div id="quizHistoryPreview" class="quiz-history-preview"></div>
+    </div>
+    
+    <!-- Active Quiz Area -->
+    <div id="quizActive" style="display: none;">
+        <div class="quiz-progress">
+            <span id="questionCounter">Question 1/15</span>
+            <span id="quizScoreDisplay">Score: 0</span>
+        </div>
+        
+        <div class="question-card">
+            <div id="questionCategory" class="question-category"></div>
+            <p id="quizQuestion" class="quiz-question-text">Loading...</p>
+        </div>
+        
+        <div class="answer-buttons">
+            <button class="answer-btn yes-btn" data-answer="yes">Yes ❤️</button>
+            <button class="answer-btn maybe-btn" data-answer="maybe">Maybe 🤔</button>
+            <button class="answer-btn no-btn" data-answer="no">No 💔</button>
+        </div>
+        
+        <button id="cancelQuizBtn" class="cancel-quiz-btn">❌ Cancel Quiz</button>
+    </div>
+    
+    <!-- Quiz Result Area -->
+    <div id="quizResult" style="display: none;">
+        <div class="result-card" id="resultCard">
+            <div class="result-emoji" id="resultEmoji">💕</div>
+            <h3 id="resultTitle">True Love</h3>
+            <p id="resultMessage">Your love is beautiful!</p>
+            <div id="resultScore" class="result-score"></div>
+            <div id="categoryAnalysis" class="category-analysis"></div>
+        </div>
+        
+        <div class="result-actions">
+            <button id="shareWhatsAppBtn" class="share-btn">💌 Share Result</button>
+            <button id="playAgainBtn" class="play-again-btn">🔄 Play Again</button>
+            <button id="viewHistoryBtn" class="history-btn">📜 View History</button>
+        </div>
+    </div>
+    
+    <!-- History View -->
+    <div id="quizHistoryView" style="display: none;">
+        <h3>📜 Your Love Quiz Journey</h3>
+        <div id="historyTimeline" class="history-timeline"></div>
+        <button id="backFromHistory" class="back-home-btn">🔙 Back to Quiz</button>
+    </div>
+    
+    <button id="backFromQuiz" class="back-home-btn">🏠 Back Home</button>
+</div>
             <!-- MEMORY GALLERY -->
             <div id="galleryScreen" class="screen">
                 <h2>🕊️ Our little moments</h2>
