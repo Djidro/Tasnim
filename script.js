@@ -233,14 +233,15 @@
     function initGameApp() {
         // Initialize DOM references
         screens = {
-            home: document.getElementById('homeScreen'),
-            story: document.getElementById('storyScreen'),
-            mini: document.getElementById('miniGameScreen'),
-            daily: document.getElementById('dailyScreen'),
-            gallery: document.getElementById('galleryScreen'),
-            future: document.getElementById('futureScreen'),
-            settings: document.getElementById('settingsScreen')
-        };
+    home: document.getElementById('homeScreen'),
+    story: document.getElementById('storyScreen'),
+    mini: document.getElementById('miniGameScreen'),
+    daily: document.getElementById('dailyScreen'),
+    quiz: document.getElementById('quizScreen'),  // ← ADD THIS LINE
+    gallery: document.getElementById('galleryScreen'),
+    future: document.getElementById('futureScreen'),
+    settings: document.getElementById('settingsScreen')
+};
         welcomeMsg = document.getElementById('welcomeMessage');
         dynamicNameSpan = document.getElementById('dynamicNameDisplay');
         
@@ -249,19 +250,32 @@
         
         // ----- SCREEN NAVIGATION -----
         function showScreen(screenId) {
-            Object.values(screens).forEach(s => {
-                if (s) s.classList.remove('active');
-            });
-            if (screens[screenId]) {
-                screens[screenId].classList.add('active');
-            }
-            currentScreen = screenId;
-            if (screenId === 'daily') generateDailyMessage();
-            if (screenId === 'gallery') renderMemoryGallery();
-            if (screenId === 'story') loadStoryChapter(currentStoryChapter);
-            if (screenId === 'future') renderFuturePlans();
-        }
-
+    Object.values(screens).forEach(s => {
+        if (s) s.classList.remove('active');
+    });
+    if (screens[screenId]) {
+        screens[screenId].classList.add('active');
+    }
+    currentScreen = screenId;
+    if (screenId === 'daily') generateDailyMessage();
+    if (screenId === 'gallery') renderMemoryGallery();
+    if (screenId === 'story') loadStoryChapter(currentStoryChapter);
+    if (screenId === 'future') renderFuturePlans();
+    if (screenId === 'quiz') {
+        // Reset quiz view to intro when navigating to quiz
+        const quizIntro = document.getElementById('quizIntro');
+        const quizActive = document.getElementById('quizActive');
+        const quizResult = document.getElementById('quizResult');
+        const quizHistoryView = document.getElementById('quizHistoryView');
+        
+        if (quizIntro) quizIntro.style.display = 'block';
+        if (quizActive) quizActive.style.display = 'none';
+        if (quizResult) quizResult.style.display = 'none';
+        if (quizHistoryView) quizHistoryView.style.display = 'none';
+        
+        initQuizUI();
+    }
+}
         // ----- LOCALSTORAGE -----
         function saveProgress() {
             localStorage.setItem('loveQuest_progress', JSON.stringify({ 
@@ -988,6 +1002,12 @@
         if (goFutureBtn) {
             goFutureBtn.addEventListener('click', () => showScreen('future'));
         }
+        
+        // Navigation for Quiz Screen
+        const goQuizBtn = document.getElementById('goQuizBtn');
+        if (goQuizBtn) {
+            goQuizBtn.addEventListener('click', () => showScreen('quiz'));
+        }
 
         const backFromFuture = document.getElementById('backFromFuture');
         if (backFromFuture) {
@@ -1001,8 +1021,401 @@
                 showPopup(`Hey ${girlfriendName}… I just wanted to remind you I love you ❤️`); 
             }
         }, 1500);
-    }
+}
+// ========== LOVE QUIZ SYSTEM (SINGLE PLAYER) ==========
+let quizQuestions = [];
+let currentQuizQuestions = [];
+let currentQuestionIndex = 0;
+let quizScore = 0;
+let categoryScores = { love: 0, trust: 0, loyalty: 0, future: 0, fun: 0 };
+let quizHistory = [];
 
+// ========== QUESTION POOL ==========
+// ========== QUESTION POOL ==========
+function initializeQuestionPool() {
+    quizQuestions = [
+        // Deep Love Questions
+        { text: "Would you sacrifice your lifelong dream career if it meant saving the relationship?", category: "love" },
+        { text: "If they lost all their memories of you tomorrow, would you stay and make them fall in love with you again from scratch?", category: "love" },
+        { text: "Would you donate a kidney to save their life, knowing it might affect your own health permanently?", category: "love" },
+        { text: "If they had to move to another country permanently for their family, would you leave everything behind to follow them?", category: "love" },
+        { text: "Would you take a bullet for them without hesitation?", category: "love" },
+        { text: "If they became severely disabled and required 24/7 care, would you commit to being their caregiver for life?", category: "love" },
+        { text: "Would you give up your chance to have biological children if they couldn't have any?", category: "love" },
+        { text: "If your family disowned you for being with them, would you still choose this relationship?", category: "love" },
+        { text: "Would you sell everything you own to help them through a financial crisis?", category: "love" },
+        { text: "If they confessed they'd committed a serious crime years ago, would you still stand by them?", category: "love" },
+        { text: "Would you rather live a short life filled with their love, or a long life without ever meeting them?", category: "love" },
+        { text: "If they developed a condition that changed their personality completely, would you still love who they become?", category: "love" },
+        { text: "Would you forgive them if they emotionally hurt you deeply but showed genuine remorse?", category: "love" },
+        { text: "Could you love them the same way if they gained 100kg and looked completely different?", category: "love" },
+        { text: "If they needed you to quit social media and all outside friendships for the relationship to work, would you?", category: "love" },
+        
+        // Deep Trust Questions
+        { text: "Would you give them complete access to all your bank accounts and financial information?", category: "trust" },
+        { text: "If they asked to read every message on your phone right now, would you hand it over unlocked without deleting anything?", category: "trust" },
+        { text: "Would you trust them alone on a week-long trip with an attractive friend of the opposite gender?", category: "trust" },
+        { text: "If they told you a secret that could destroy their reputation, would you take it to your grave?", category: "trust" },
+        { text: "Would you co-sign a large loan for them knowing you'd be legally responsible if they defaulted?", category: "trust" },
+        { text: "If they were accused of something terrible but claimed innocence, would you believe them over all evidence?", category: "trust" },
+        { text: "Would you let them make all major life decisions for both of you for one year?", category: "trust" },
+        { text: "If they asked you to cut off a close friend they felt threatened by, would you do it?", category: "trust" },
+        { text: "Would you share your deepest shame and trauma that you've never told anyone else?", category: "trust" },
+        { text: "If they had to work late nights regularly with an attractive colleague, would you feel completely secure?", category: "trust" },
+        { text: "Would you trust them to raise your children with values you might not fully agree with?", category: "trust" },
+        { text: "If they made a decision that lost all your savings, would you still trust them with finances in the future?", category: "trust" },
+        
+        // Deep Loyalty Questions
+        { text: "If everyone you know advised you to leave them, would you stay anyway?", category: "loyalty" },
+        { text: "Would you defend them publicly even if they did something morally questionable?", category: "loyalty" },
+        { text: "If they got canceled on social media for past mistakes, would you risk your own reputation defending them?", category: "loyalty" },
+        { text: "Would you stay with them through a 5-year prison sentence?", category: "loyalty" },
+        { text: "If they relapsed into addiction after years of sobriety, would you stay and help them recover again?", category: "loyalty" },
+        { text: "Would you cut ties with your best friend if they constantly disrespected your partner?", category: "loyalty" },
+        { text: "If your partner got into a physical fight defending you, would you lie to police to protect them?", category: "loyalty" },
+        { text: "Would you stay faithful even if your marriage had been sexless for over 5 years?", category: "loyalty" },
+        { text: "If they developed severe mental health issues that made them difficult to be around, would you stay committed?", category: "loyalty" },
+        { text: "Would you give up your favorite hobby forever if it made them uncomfortable?", category: "loyalty" },
+        { text: "If they asked you to move to a remote area with no friends or family nearby, would you go?", category: "loyalty" },
+        { text: "Would you choose them over seeing your parents for major holidays every year?", category: "loyalty" },
+        
+        // Deep Marriage/Future Questions
+        { text: "Would you sign a prenup that heavily favors them because they asked you to?", category: "future" },
+        { text: "If you discovered after marriage that you wanted completely different lifestyles, would you compromise yours entirely?", category: "future" },
+        { text: "Would you be willing to live with and care for their aging parents in your home for 20+ years?", category: "future" },
+        { text: "If they wanted 5 children and you wanted 1, would you agree to have 5?", category: "future" },
+        { text: "Would you give up your religion or convert to theirs if it was necessary for marriage?", category: "future" },
+        { text: "If they wanted to raise children with strict traditional gender roles you disagree with, would you accept it?", category: "future" },
+        { text: "Would you stay in an unhappy marriage for decades 'for the children'?", category: "future" },
+        { text: "If they wanted an open marriage, would you consider it to keep them happy?", category: "future" },
+        { text: "Would you give up your dream of home ownership to live a nomadic life they prefer?", category: "future" },
+        { text: "If they wanted to adopt a child with special needs, would you commit to that lifetime responsibility?", category: "future" },
+        { text: "Would you move to a country where you don't speak the language for their career opportunity?", category: "future" },
+        { text: "If they became famous and wanted you to stay out of the spotlight entirely, would you accept being invisible?", category: "future" },
+        { text: "Would you agree to never retire because they want to keep working forever?", category: "future" },
+        { text: "If they wanted a marriage where you're the sole breadwinner and they don't work, would you accept that?", category: "future" },
+        { text: "Would you be okay if they wanted separate bedrooms permanently after marriage?", category: "future" }
+    ];
+}
+
+// Load quiz history from localStorage
+function loadQuizHistory() {
+    const saved = localStorage.getItem('loveQuest_quizHistory');
+    if (saved) {
+        try {
+            quizHistory = JSON.parse(saved);
+        } catch(e) {
+            quizHistory = [];
+        }
+    }
+}
+
+// Save quiz history to localStorage
+function saveQuizHistory() {
+    localStorage.setItem('loveQuest_quizHistory', JSON.stringify(quizHistory));
+}
+
+// Select 15 random questions
+function selectRandomQuestions(count = 15) {
+    const shuffled = [...quizQuestions].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(count, shuffled.length));
+}
+
+// Reset quiz state
+function resetQuiz() {
+    currentQuestionIndex = 0;
+    quizScore = 0;
+    categoryScores = { love: 0, trust: 0, loyalty: 0, future: 0, fun: 0 };
+    currentQuizQuestions = selectRandomQuestions(15);
+}
+
+// Update category scores
+function updateCategoryScore(category, points) {
+    if (categoryScores.hasOwnProperty(category)) {
+        categoryScores[category] += points;
+    }
+}
+
+// Display current question
+function displayQuestion() {
+    const questionText = document.getElementById('quizQuestion');
+    const questionCounter = document.getElementById('questionCounter');
+    const quizScoreDisplay = document.getElementById('quizScoreDisplay');
+    const categoryBadge = document.getElementById('questionCategory');
+    
+    if (currentQuestionIndex < currentQuizQuestions.length) {
+        const q = currentQuizQuestions[currentQuestionIndex];
+        questionText.textContent = q.text;
+        questionCounter.textContent = `Question ${currentQuestionIndex + 1}/${currentQuizQuestions.length}`;
+        quizScoreDisplay.textContent = `Score: ${quizScore}`;
+        categoryBadge.textContent = q.category.toUpperCase() + ' 💭';
+    }
+}
+
+// Handle answer selection
+function handleAnswer(answer) {
+    const points = answer === 'yes' ? 2 : (answer === 'maybe' ? 1 : 0);
+    const currentQ = currentQuizQuestions[currentQuestionIndex];
+    
+    // Update scores
+    quizScore += points;
+    updateCategoryScore(currentQ.category, points);
+    
+    // Move to next question or show result
+    currentQuestionIndex++;
+    
+    if (currentQuestionIndex < currentQuizQuestions.length) {
+        displayQuestion();
+    } else {
+        showQuizResult();
+    }
+}
+
+// Get result based on score
+function getResultFromScore(score, maxScore = 30) {
+    const percentage = (score / maxScore) * 100;
+    
+    if (percentage >= 80) {
+        return {
+            title: "💍 True Love · Marriage Ready",
+            message: `Your love is deep, pure, and built to last. The connection you share is rare and beautiful. You're ready for forever together.`,
+            emoji: "💑💍✨"
+        };
+    } else if (percentage >= 60) {
+        return {
+            title: "🌹 Strong & Growing Connection",
+            message: `You have a beautiful foundation of love and trust. Keep nurturing what you have—it's something special.`,
+            emoji: "🌱💕🌟"
+        };
+    } else if (percentage >= 40) {
+        return {
+            title: "🌸 Promising Potential",
+            message: `There's genuine affection here. With more communication and time, this could bloom into something amazing.`,
+            emoji: "🌷🤝💫"
+        };
+    } else {
+        return {
+            title: "🌱 Room to Grow Together",
+            message: `Every great love story takes time to write. Be patient, communicate openly, and let your connection deepen naturally.`,
+            emoji: "🌿💭❤️"
+        };
+    }
+}
+
+// Show quiz result
+function showQuizResult() {
+    document.getElementById('quizActive').style.display = 'none';
+    document.getElementById('quizResult').style.display = 'block';
+    
+    const maxScore = currentQuizQuestions.length * 2;
+    const result = getResultFromScore(quizScore, maxScore);
+    
+    document.getElementById('resultEmoji').textContent = result.emoji;
+    document.getElementById('resultTitle').textContent = result.title;
+    document.getElementById('resultMessage').textContent = result.message;
+    document.getElementById('resultScore').innerHTML = 
+        `Score: ${quizScore}/${maxScore} (${Math.round((quizScore/maxScore)*100)}%)`;
+    
+    // Show category analysis
+    displayCategoryAnalysis();
+    
+    // Save to history
+    saveQuizResultToHistory(quizScore, maxScore, result);
+}
+
+// Display category analysis
+function displayCategoryAnalysis() {
+    const analysisDiv = document.getElementById('categoryAnalysis');
+    const categories = [
+        { key: 'love', name: 'Deep Love ❤️', max: 30 },
+        { key: 'trust', name: 'Ultimate Trust 🤝', max: 24 },
+        { key: 'loyalty', name: 'Unwavering Loyalty 🛡️', max: 24 },
+        { key: 'future', name: 'Lifetime Commitment 💍', max: 30 }
+    ];
+    
+    let html = '';
+    categories.forEach(cat => {
+        const score = categoryScores[cat.key] || 0;
+        const percentage = (score / cat.max) * 100;
+        const level = percentage >= 70 ? 'Strong' : (percentage >= 40 ? 'Good' : 'Growing');
+        
+        html += `
+            <div class="category-item">
+                <div class="category-name">${cat.name}</div>
+                <div class="category-score-bar">
+                    <div class="category-score-fill" style="width: ${percentage}%"></div>
+                </div>
+                <div style="font-size: 0.85rem;">${level} (${score}/${cat.max})</div>
+            </div>
+        `;
+    });
+    
+    analysisDiv.innerHTML = html;
+}
+
+// Save result to history
+function saveQuizResultToHistory(score, maxScore, result) {
+    const entry = {
+        date: new Date().toISOString(),
+        score: score,
+        maxScore: maxScore,
+        percentage: Math.round((score/maxScore)*100),
+        result: result.title,
+        categoryScores: {...categoryScores}
+    };
+    
+    quizHistory.unshift(entry);
+    if (quizHistory.length > 20) quizHistory.pop();
+    saveQuizHistory();
+}
+
+// Share on WhatsApp - FIXED VERSION
+function shareOnWhatsApp() {
+    const score = quizScore;
+    const maxScore = currentQuizQuestions.length * 2;
+    const result = getResultFromScore(score, maxScore);
+    const percentage = Math.round((score/maxScore)*100);
+    
+    // Create the message
+    const message = `💕 Love Quiz Result 💕%0A%0A` +
+                   `Result: ${result.title}%0A` +
+                   `Score: ${score}/${maxScore} (${percentage}%)%0A%0A` +
+                   `${result.message}%0A%0A` +
+                   `Take the quiz yourself at:%0A` +
+                   `https://djidro.github.io/Tasnim/%0A%0A` +
+                   `Made with love ❤️`;
+    
+    // Open WhatsApp with pre-filled message
+    window.open(`https://wa.me/96878440900?text=${message}`, '_blank');
+}
+
+// Display history timeline
+function displayHistoryTimeline() {
+    const timelineDiv = document.getElementById('historyTimeline');
+    
+    if (quizHistory.length === 0) {
+        timelineDiv.innerHTML = '<p style="text-align: center; padding: 20px;">No quiz history yet. Take your first quiz! 💕</p>';
+        return;
+    }
+    
+    let html = '';
+    quizHistory.forEach((entry) => {
+        const date = new Date(entry.date);
+        const dateStr = `${date.toLocaleDateString()} at ${date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
+        
+        html += `
+            <div class="history-entry">
+                <div class="history-date">📅 ${dateStr}</div>
+                <div class="history-result">${entry.result}</div>
+                <div class="history-score">Score: ${entry.score}/${entry.maxScore} (${entry.percentage}%)</div>
+            </div>
+        `;
+    });
+    
+    timelineDiv.innerHTML = html;
+}
+
+// Update history preview on intro screen
+function updateHistoryPreview() {
+    const previewDiv = document.getElementById('quizHistoryPreview');
+    if (!previewDiv) return;
+    
+    if (quizHistory.length === 0) {
+        previewDiv.innerHTML = '<p style="text-align: center; opacity: 0.7; margin-top: 20px;">✨ Take your first quiz to see your love story unfold ✨</p>';
+    } else {
+        const latest = quizHistory[0];
+        previewDiv.innerHTML = `
+            <h4 style="margin: 20px 0 10px;">📜 Latest Result</h4>
+            <div class="history-entry">
+                <div class="history-result">${latest.result}</div>
+                <div class="history-score">Score: ${latest.score}/${latest.maxScore} (${latest.percentage}%)</div>
+            </div>
+        `;
+    }
+}
+
+// Initialize Quiz UI
+function initQuizUI() {
+    initializeQuestionPool();
+    loadQuizHistory();
+    
+    // Get DOM elements
+    const quizIntro = document.getElementById('quizIntro');
+    const quizActive = document.getElementById('quizActive');
+    const quizResult = document.getElementById('quizResult');
+    const quizHistoryView = document.getElementById('quizHistoryView');
+    const startQuizBtn = document.getElementById('startQuizBtn');
+    const cancelQuizBtn = document.getElementById('cancelQuizBtn');
+    const shareBtn = document.getElementById('shareWhatsAppBtn');
+    const playAgainBtn = document.getElementById('playAgainBtn');
+    const viewHistoryBtn = document.getElementById('viewHistoryBtn');
+    const backFromHistory = document.getElementById('backFromHistory');
+    
+    // Start quiz
+    if (startQuizBtn) {
+        startQuizBtn.addEventListener('click', () => {
+            resetQuiz();
+            quizIntro.style.display = 'none';
+            quizActive.style.display = 'block';
+            quizResult.style.display = 'none';
+            displayQuestion();
+        });
+    }
+    
+    // Answer buttons
+    document.querySelectorAll('.answer-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const answer = e.target.dataset.answer;
+            handleAnswer(answer);
+        });
+    });
+    
+    // Cancel quiz
+    if (cancelQuizBtn) {
+        cancelQuizBtn.addEventListener('click', () => {
+            quizActive.style.display = 'none';
+            quizIntro.style.display = 'block';
+        });
+    }
+    
+    // Share button - NOW IT WILL WORK!
+    if (shareBtn) {
+        shareBtn.addEventListener('click', () => {
+            shareOnWhatsApp();
+        });
+    }
+    
+    // Play again
+    if (playAgainBtn) {
+        playAgainBtn.addEventListener('click', () => {
+            resetQuiz();
+            quizResult.style.display = 'none';
+            quizActive.style.display = 'block';
+            displayQuestion();
+        });
+    }
+    
+    // View history
+    if (viewHistoryBtn) {
+        viewHistoryBtn.addEventListener('click', () => {
+            quizResult.style.display = 'none';
+            quizHistoryView.style.display = 'block';
+            displayHistoryTimeline();
+        });
+    }
+    
+    // Back from history
+    if (backFromHistory) {
+        backFromHistory.addEventListener('click', () => {
+            quizHistoryView.style.display = 'none';
+            quizIntro.style.display = 'block';
+            updateHistoryPreview();
+        });
+    }
+    
+    // Show history preview
+    updateHistoryPreview();
+}
     // Particle canvas (always runs)
     const pCanvas = document.getElementById('heart-particle-canvas');
     if (pCanvas) {
