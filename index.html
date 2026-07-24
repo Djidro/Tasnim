@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>🔐 Love Quest · Tasnim</title>
+    <title>💗 Love Quest · Tasnim</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,46 +11,21 @@
     <canvas id="heart-particle-canvas"></canvas>
 
     <!-- ========== PASSWORD PROTECTION OVERLAY ========= -->
-    <div id="loginOverlay">
-        <!-- REMOVED static rings - JS creates them dynamically -->
-        <div class="login-card">
-    <div class="login-icon">💗</div>
-    <h2>Love Quest</h2>
-    <p class="subtitle">Only for Tasnim ✨</p>
-    
-    <input type="email" id="emailInput" class="login-input" placeholder="📧 Your email" />
-    <input type="password" id="passwordInput" class="login-input" placeholder="🔐 Our special date" />
-    
-    <button id="loginBtn" class="login-btn">💕 Open Our World</button>
-    <p id="loginError" class="error-message"></p>
-    <div class="hint-note">28.dec.2017 — our forever date</div>
-</div>
+<div id="loginOverlay">
+    <div class="login-card">
+        <div class="login-icon">💗</div>
+        <h2>Love Quest</h2>
+        <p class="subtitle">Only for Tasnim ✨</p>
+        
+        <input type="password" id="passwordInput" class="login-input" placeholder="🔐 Our special date" />
+        
+        <button id="loginBtn" class="login-btn">💕 Open Our World</button>
+        <p id="loginError" class="error-message"></p>
+        <div class="hint-note">28.dec.2017 — our forever date</div>
+    </div>
 </div>
 
-<!-- ========== DAILY PASSCODE OVERLAY ========= -->
-<div id="dailyPasscodeOverlay" class="hidden">
-    <div class="daily-passcode-card">
-            <div class="daily-passcode-icon">🌟</div>
-            <h2>Our Secret Code</h2>
-            <p class="daily-passcode-subtitle">Enter our special date to continue 💕</p>
-            
-            <input 
-                type="text" 
-                id="dailyPasscodeInput" 
-                class="daily-passcode-input" 
-                placeholder="✨ Our forever date..."
-                autocomplete="off"
-            />
-            
-            <button id="dailyPasscodeBtn" class="daily-passcode-btn">💝 Unlock My Heart</button>
-            <p id="dailyPasscodeError" class="daily-passcode-error"></p>
-            
-            <p class="daily-passcode-hint">
-                💡 Hint: The day everything changed forever... 💭
-            </p>
-        </div>
-    </div>
-<!-- ========== MAIN WEBSITE ========= -->
+    <!-- ========== MAIN WEBSITE ========= -->
     <div id="mainApp">
         <div class="game-wrapper">
             <div id="dynamicNameDisplay" class="girl-name-badge">✨ Tasnim ✨</div>
@@ -63,9 +38,8 @@
                     <button id="startStoryBtn">🌸 Story Mode</button>
                     <button id="goMiniGameBtn">🎮 Catch the Hearts</button>
                     <button id="goDailyBtn">💌 Daily Love Message</button>
-                    
- <button id="goNotesBtn">💭Notes</button>
-                   <button id="goGalleryBtn">🖼️ Memory Gallery</button>
+                    <button id="goNotesBtn">💭 Notes</button>
+                    <button id="goGalleryBtn">🖼️ Memory Gallery</button>
                     <button id="goFutureBtn" class="future-nav-btn">🗓️ Our Future ❤️</button>
                     <button id="goSettingsBtn">⚙️ Settings</button>
                 </div>
@@ -120,20 +94,8 @@
                 </div>
                 
                 <div class="note-composer">
-                    <input 
-    type="text"
-    id="nameInput"
-    class="note-input"
-    placeholder="Your name..."
-    maxlength="30"
-/>
-                    <textarea 
-                        id="newNoteText" 
-                        class="note-input" 
-                        placeholder="Write a sweet note..." 
-                        maxlength="280"
-                        rows="2"
-                    ></textarea>
+                    <input type="text" id="nameInput" class="note-input" placeholder="Your name..." maxlength="30"/>
+                    <textarea id="newNoteText" class="note-input" placeholder="Write a sweet note..." maxlength="280" rows="2"></textarea>
                     <div class="composer-footer">
                         <span class="char-count"><span id="charCount">0</span>/280</span>
                         <button id="saveNoteBtn" class="save-note-btn">💕 Drop Note</button>
@@ -150,6 +112,7 @@
                 
                 <button id="backFromNotes" class="back-home-btn">🏠 Back Home</button>
             </div>
+
             <!-- MEMORY GALLERY -->
             <div id="galleryScreen" class="screen">
                 <h2>🕊️ Our little moments</h2>
@@ -228,7 +191,6 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
 </body>
 </html>
