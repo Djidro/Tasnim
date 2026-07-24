@@ -1,139 +1,86 @@
-// ========== SUPABASE INITIALIZATION ==========
-const supabaseUrl = 'https://jwjyrsikkxenmfuprmra.supabase.co';
-const supabaseKey = 'sb_publishable_PHN_TDMztYkLLKkxbeFanA_cKKHEu94';
-const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+// ========== GITHUB GIST CONFIGURATION ==========
+const GIST_ID = 'fba30498b001f8dabb4762ce8385cb8a';
+const GITHUB_TOKEN = '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';
+const GIST_FILENAME = 'lovequest-data.json';
 
-// ========== ONESIGNAL CONFIGURATION ==========
-const ONESIGNAL_APP_ID = '85cf1a46-eedf-4ea3-9a02-304b2c687726';
-
-// ========== GLOBAL ONESIGNAL INITIALIZATION ==========
-async function initOneSignal() {
+// ========== GIST API FUNCTIONS ==========
+async function loadFromGist() {
     try {
-        if (!window.OneSignal) {
-            await new Promise(resolve => {
-                const check = setInterval(() => {
-                    if (window.OneSignal) { clearInterval(check); resolve(); }
-                }, 100);
-            });
-        }
-
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        
-        OneSignalDeferred.push(async function(OneSignal) {
-            await OneSignal.init({
-                appId: ONESIGNAL_APP_ID,
-                notifyButton: { enable: false },
-                allowLocalhostAsSecureOrigin: true,
-                serviceWorkerPath: 'OneSignalSDKWorker.js',
-                serviceWorkerParam: { scope: '/' },
-                promptOptions: {
-                    slidedown: {
-                        prompts: [{
-                            type: "push",
-                            autoPrompt: false,
-                            text: {
-                                actionMessage: "We'd love to notify you when your countdowns finish! 💕",
-                                acceptButton: "Allow Notifications",
-                                cancelButton: "Maybe Later"
-                            },
-                            delay: { pageViews: 1, timeDelay: 3 }
-                        }]
-                    }
-                }
-            });
-
-            OneSignal.User.PushSubscription.addEventListener('change', async function(event) {
-                if (event.current && event.current.id) {
-                    await savePlayerId(event.current.id);
-                    if (showPopupGlobal && typeof showPopupGlobal === 'function') {
-                        showPopupGlobal('✅ Notifications enabled! 💕');
-                    }
-                }
-            });
-
-            OneSignal.Notifications.addEventListener('click', async function(event) {
-                window.focus();
-                if (showScreenGlobal && typeof showScreenGlobal === 'function') {
-                    showScreenGlobal('future');
-                }
-            });
-
-            const permission = await OneSignal.Notifications.permission;
-            if (!permission) {
-                setTimeout(async () => {
-                    await OneSignal.Slidedown.promptPush();
-                }, 3000);
-            }
+        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
         });
-    } catch (error) {
-        console.error('OneSignal init error:', error);
-    }
-}
-
-async function savePlayerId(playerId) {
-    try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        const email = session?.user?.email || 'anonymous';
-        await supabaseClient
-            .from('onesignal_subscriptions')
-            .upsert({ player_id: playerId, email: email, updated_at: new Date().toISOString() }, { onConflict: 'player_id' });
+        if (!response.ok) throw new Error('Failed to load');
+        const gist = await response.json();
+        const content = gist.files[GIST_FILENAME]?.content;
+        return content ? JSON.parse(content) : { notes: [], future_plans: [] };
     } catch (err) {
-        console.error('Save player ID error:', err);
+        console.error('Gist load error:', err);
+        return { notes: [], future_plans: [] };
     }
 }
 
-// ========== GLOBAL REFERENCES FOR ONESIGNAL CALLBACKS ==========
-let showPopupGlobal = null;
-let showScreenGlobal = null;
+async function saveToGist(data) {
+    try {
+        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                files: {
+                    [GIST_FILENAME]: {
+                        content: JSON.stringify(data, null, 2)
+                    }
+                }
+            })
+        });
+        if (!response.ok) throw new Error('Failed to save');
+        return true;
+    } catch (err) {
+        console.error('Gist save error:', err);
+        return false;
+    }
+}
 
 // ========== MAIN APPLICATION ==========
 (function () {
     "use strict";
 
-    // ========== AUTHENTICATION CHECK ==========
-    async function checkUser() {
-        try {
-            const { data: { session }, error } = await supabaseClient.auth.getSession();
-            if (error) { console.error('Session error:', error); return; }
+    // ========== SIMPLE PASSWORD LOGIN ==========
+    const VALID_PASSWORDS = ['28dec', '28.dec', '28.dec.2017', '28-dec', '28dec2017'];
 
-            const loginOverlay = document.getElementById('loginOverlay');
-            const mainApp = document.getElementById('mainApp');
+    function checkUser() {
+        const isLoggedIn = sessionStorage.getItem('lovequest_auth');
+        const loginOverlay = document.getElementById('loginOverlay');
+        const mainApp = document.getElementById('mainApp');
 
-            if (session) {
-                if (loginOverlay) loginOverlay.classList.add('hidden');
-                if (mainApp) mainApp.classList.add('visible');
-                sessionStorage.setItem('lovequest_auth', 'true');
-                if (!window._gameInitialized) {
-                    initGameApp();
-                    window._gameInitialized = true;
-                }
-                showDailyPasscodeScreen();
-                initOneSignal();
-            } else {
-                if (loginOverlay) loginOverlay.classList.remove('hidden');
+        if (isLoggedIn === 'true') {
+            if (loginOverlay) loginOverlay.classList.add('hidden');
+            if (mainApp) mainApp.classList.add('visible');
+            if (!window._gameInitialized) {
+                initGameApp();
+                window._gameInitialized = true;
             }
-        } catch (err) {
-            console.error('checkUser error:', err);
+        } else {
+            if (loginOverlay) loginOverlay.classList.remove('hidden');
+            if (mainApp) mainApp.classList.remove('visible');
         }
     }
 
-    async function attemptLogin() {
-        const emailInput = document.getElementById('emailInput');
+    function attemptLogin() {
         const passwordInput = document.getElementById('passwordInput');
         const loginError = document.getElementById('loginError');
         const loginOverlay = document.getElementById('loginOverlay');
         const mainApp = document.getElementById('mainApp');
-        const email = emailInput?.value.trim();
-        const password = passwordInput?.value.trim();
+        const password = passwordInput?.value.trim().toLowerCase();
 
-        if (!email || !password) {
-            if (loginError) loginError.textContent = "❌ Please enter email and password";
+        if (!password) {
+            if (loginError) loginError.textContent = "❌ Please enter our special date";
             return;
         }
 
-        try {
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) { if (loginError) loginError.textContent = "❌ " + error.message; return; }
+        if (VALID_PASSWORDS.includes(password)) {
             if (loginOverlay) loginOverlay.classList.add('hidden');
             if (mainApp) mainApp.classList.add('visible');
             sessionStorage.setItem('lovequest_auth', 'true');
@@ -141,44 +88,10 @@ let showScreenGlobal = null;
                 initGameApp();
                 window._gameInitialized = true;
             }
-            showDailyPasscodeScreen();
-            initOneSignal();
-        } catch (err) {
-            console.error('Login error:', err);
-            if (loginError) loginError.textContent = "❌ Login failed.";
-        }
-    }
-
-    const CORRECT_PASSCODE = "28.dec";
-
-    function showDailyPasscodeScreen() {
-        const overlay = document.getElementById('dailyPasscodeOverlay');
-        const error = document.getElementById('dailyPasscodeError');
-        const input = document.getElementById('dailyPasscodeInput');
-        const mainApp = document.getElementById('mainApp');
-        if (overlay) overlay.classList.remove('hidden');
-        if (error) error.textContent = '';
-        if (input) input.value = '';
-        if (mainApp) mainApp.classList.remove('visible');
-    }
-
-    function hideDailyPasscodeScreen() {
-        const overlay = document.getElementById('dailyPasscodeOverlay');
-        const mainApp = document.getElementById('mainApp');
-        if (overlay) overlay.classList.add('hidden');
-        if (mainApp) mainApp.classList.add('visible');
-    }
-
-    function checkDailyPasscode() {
-        const input = document.getElementById('dailyPasscodeInput');
-        const error = document.getElementById('dailyPasscodeError');
-        const entered = input?.value.trim();
-        if (entered === CORRECT_PASSCODE || entered === "28dec" || entered === "28.dec.2017") {
-            hideDailyPasscodeScreen();
-            alert('💕 Welcome back, my love! ✨');
+            showPopup('💕 Welcome back, my love! ✨');
         } else {
-            if (error) error.textContent = "❌ That's not our date, baby... Try again 💭";
-            if (input) { input.value = ''; input.focus(); }
+            if (loginError) loginError.textContent = "❌ That's not our date, try again... 💭";
+            if (passwordInput) { passwordInput.value = ''; passwordInput.focus(); }
         }
     }
 
@@ -235,38 +148,29 @@ let showScreenGlobal = null;
     let screens = {};
     let welcomeMsg, dynamicNameSpan;
     let futurePlans = [];
+    let notesList = [];
     let countdownIntervals = new Map();
     let notifiedPlans = new Set();
-    let notesSubscription = null;
-    let commentSubscription = null;
-    let currentUser = null;
 
-    // ========== NOTIFICATION FUNCTIONS ==========
-    function playNotificationSound() {
-        try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            const audioCtx = new AudioContext();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const notes = [
-                { freq: 523.25, delay: 0 },
-                { freq: 659.25, delay: 0.1 },
-                { freq: 783.99, delay: 0.2 },
-                { freq: 1046.50, delay: 0.3 }
-            ];
-            notes.forEach(({ freq, delay }) => {
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.frequency.value = freq;
-                oscillator.type = 'sine';
-                const startTime = audioCtx.currentTime + delay;
-                gainNode.gain.setValueAtTime(0.2, startTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3);
-                oscillator.start(startTime);
-                oscillator.stop(startTime + 0.3);
+    // ========== BROWSER NOTIFICATIONS ==========
+    async function requestNotificationPermission() {
+        if (!("Notification" in window)) return;
+        if (Notification.permission === "default") {
+            await Notification.requestPermission();
+        }
+    }
+
+    function sendBrowserNotification(title, body) {
+        if (!("Notification" in window)) return;
+        if (Notification.permission === "granted") {
+            new Notification(title, {
+                body: body,
+                icon: '❤️',
+                badge: '❤️',
+                vibrate: [200, 100, 200],
+                requireInteraction: true
             });
-        } catch (e) { /* ignore */ }
+        }
     }
 
     function checkAndNotifyPlan(plan) {
@@ -276,44 +180,22 @@ let showScreenGlobal = null;
         if (diff <= 0 && !notifiedPlans.has(plan.id)) {
             notifiedPlans.add(plan.id);
             showPopup(`💫 "${plan.title}" is happening now! ❤️`);
-            playNotificationSound();
-            if (document.hidden) createBrowserNotification(plan);
-            markPlanAsNotifiedInDB(plan.id);
+            sendBrowserNotification(`💫 ${plan.title}`, plan.description || 'Your special moment has arrived! ❤️');
+            saveNotifiedPlans();
         }
     }
 
-    async function createBrowserNotification(plan) {
-        if (!("Notification" in window)) return;
-        try {
-            const permission = await Notification.requestPermission();
-            if (permission === "granted") {
-                const notification = new Notification(`💫 ${plan.title}`, {
-                    body: plan.description || 'Your special moment has arrived! ❤️',
-                    icon: '/icon-192.png',
-                    badge: '/icon-192.png',
-                    tag: `plan-${plan.id}`,
-                    vibrate: [200, 100, 200],
-                    requireInteraction: true
-                });
-                notification.onclick = () => { window.focus(); showScreen('future'); notification.close(); };
-            }
-        } catch (error) { /* ignore */ }
+    function saveNotifiedPlans() {
+        localStorage.setItem('notified_plans', JSON.stringify([...notifiedPlans]));
     }
 
-    async function markPlanAsNotifiedInDB(planId) {
-        try {
-            await supabaseClient
-                .from('future_plans')
-                .update({ notification_sent: true, notification_sent_at: new Date().toISOString() })
-                .eq('id', planId);
-        } catch (err) { console.error('Mark notified error:', err); }
-    }
-
-    async function loadNotifiedPlans() {
-        try {
-            const { data } = await supabaseClient.from('future_plans').select('id').eq('notification_sent', true);
-            if (data) data.forEach(plan => notifiedPlans.add(plan.id));
-        } catch (err) { console.error('Load notified error:', err); }
+    function loadNotifiedPlans() {
+        const saved = localStorage.getItem('notified_plans');
+        if (saved) {
+            try {
+                notifiedPlans = new Set(JSON.parse(saved));
+            } catch (e) { /* ignore */ }
+        }
     }
 
     // ========== INIT GAME APP ==========
@@ -331,13 +213,11 @@ let showScreenGlobal = null;
         welcomeMsg = document.getElementById('welcomeMessage');
         dynamicNameSpan = document.getElementById('dynamicNameDisplay');
         
-        // Set global references for OneSignal callbacks
-        showPopupGlobal = showPopup;
-        showScreenGlobal = showScreen;
-        
         updateNameEverywhere();
+        requestNotificationPermission();
+        loadNotifiedPlans();
+        initDataSync();
 
-        // ========== SCREEN NAVIGATION ==========
         function showScreen(screenId) {
             Object.values(screens).forEach(s => { if (s) s.classList.remove('active'); });
             if (screens[screenId]) screens[screenId].classList.add('active');
@@ -346,7 +226,36 @@ let showScreenGlobal = null;
             if (screenId === 'gallery') renderMemoryGallery();
             if (screenId === 'story') loadStoryChapter(currentStoryChapter);
             if (screenId === 'future') renderFuturePlans();
-            if (screenId === 'notes') initNotesScreen();
+            if (screenId === 'notes') renderNotesFromLocal();
+        }
+
+        // ========== DATA SYNC ==========
+        async function initDataSync() {
+            const localNotes = localStorage.getItem('lovequest_notes');
+            const localPlans = localStorage.getItem('lovequest_plans');
+            
+            if (localNotes) notesList = JSON.parse(localNotes);
+            if (localPlans) futurePlans = JSON.parse(localPlans);
+
+            const gistData = await loadFromGist();
+            if (gistData.notes && gistData.notes.length > 0) {
+                notesList = gistData.notes;
+                localStorage.setItem('lovequest_notes', JSON.stringify(notesList));
+            }
+            if (gistData.future_plans && gistData.future_plans.length > 0) {
+                futurePlans = gistData.future_plans;
+                localStorage.setItem('lovequest_plans', JSON.stringify(futurePlans));
+            }
+        }
+
+        async function syncAllData() {
+            const data = {
+                notes: notesList,
+                future_plans: futurePlans
+            };
+            localStorage.setItem('lovequest_notes', JSON.stringify(notesList));
+            localStorage.setItem('lovequest_plans', JSON.stringify(futurePlans));
+            await saveToGist(data);
         }
 
         // ========== LOCAL STORAGE ==========
@@ -616,6 +525,70 @@ let showScreenGlobal = null;
             if (welcomeMsg) welcomeMsg.textContent = `Welcome, ${girlfriendName} ❤️ This world was made just for you.`;
         }
 
+        // ========== NOTES SYSTEM ==========
+        function renderNotesFromLocal() {
+            const container = document.getElementById('notesList');
+            if (!container) return;
+            
+            if (notesList.length === 0) {
+                container.innerHTML = '<div class="notes-empty"><div class="empty-notes-icon">💌</div><p>No notes yet...</p><p class="notes-empty-sub">Write the first love note!</p></div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            notesList.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            notesList.forEach(note => {
+                const card = document.createElement('div');
+                card.className = 'note-card';
+                card.innerHTML = `
+                    <div class="note-body">
+                        <div class="note-text">${escapeHtml(note.content)}</div>
+                        <div class="note-actions">
+                            <button class="action-btn delete-btn" data-id="${note.id}">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="note-meta">
+                        <span class="note-author">${escapeHtml(note.author_name || 'Anonymous')}</span>
+                        <span class="note-time">${timeAgo(note.created_at)}</span>
+                    </div>
+                `;
+                card.querySelector('.delete-btn').addEventListener('click', () => deleteNote(note.id));
+                container.appendChild(card);
+            });
+        }
+
+        async function saveNoteToLocal() {
+            const input = document.getElementById("newNoteText");
+            const nameInput = document.getElementById("nameInput");
+            if (!input) return;
+            const content = input.value.trim();
+            let name = nameInput?.value?.trim() || "Anonymous";
+            if (!content) { showPopup("Write something first! 💭"); return; }
+            
+            const note = {
+                id: Date.now().toString(),
+                content: content,
+                author_name: name,
+                created_at: new Date().toISOString()
+            };
+            
+            notesList.unshift(note);
+            localStorage.setItem('lovequest_notes', JSON.stringify(notesList));
+            input.value = "";
+            if (nameInput) nameInput.value = "";
+            renderNotesFromLocal();
+            showPopup("💕 Note saved!");
+            await syncAllData();
+        }
+
+        async function deleteNote(noteId) {
+            if (!confirm('Delete this note?')) return;
+            notesList = notesList.filter(n => n.id !== noteId);
+            localStorage.setItem('lovequest_notes', JSON.stringify(notesList));
+            renderNotesFromLocal();
+            await syncAllData();
+        }
+
         // ========== FUTURE PLANS ==========
         function formatCountdown(targetDate) {
             const now = new Date();
@@ -633,6 +606,20 @@ let showScreenGlobal = null;
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function timeAgo(dateString) {
+            const now = new Date();
+            const date = new Date(dateString);
+            const seconds = Math.floor((now - date) / 1000);
+            if (seconds < 60) return 'just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `${days}d ago`;
+            return date.toLocaleDateString();
         }
 
         function startCountdown(planId, targetDate, element, plan) {
@@ -685,17 +672,6 @@ let showScreenGlobal = null;
             countdownIntervals.set(planId, { cancel: () => { if (rafId) cancelAnimationFrame(rafId); } });
         }
 
-        async function loadFuturePlans() {
-            try {
-                const { data, error } = await supabaseClient.from('future_plans').select('*').order('date', { ascending: true });
-                if (error) { console.error('Error loading plans:', error.message); return; }
-                futurePlans = data || [];
-                await loadNotifiedPlans();
-                renderFuturePlans();
-                updateFuturePlansCount();
-            } catch (err) { console.error('Failed to load plans:', err); }
-        }
-
         function createPlanCard(plan, index) {
             const card = document.createElement('div');
             card.className = 'plan-card';
@@ -746,76 +722,48 @@ let showScreenGlobal = null;
             }
         }
 
-        function updateFuturePlansCount() {
-            const countElement = document.getElementById('futurePlansCount');
-            if (countElement) countElement.textContent = futurePlans.length;
-        }
-
         async function addFuturePlan(title, description, date, author) {
-            try {
-                const { error } = await supabaseClient.from('future_plans').insert([{ title, description, date, author, created_at: new Date().toISOString() }]);
-                if (error) { alert('❌ Failed to save plan: ' + error.message); return; }
-                alert('✅ Plan saved!');
-                await loadFuturePlans();
-            } catch (err) { alert('❌ Failed to save plan'); }
+            const plan = {
+                id: Date.now().toString(),
+                title,
+                description,
+                date,
+                author,
+                created_at: new Date().toISOString()
+            };
+            futurePlans.push(plan);
+            localStorage.setItem('lovequest_plans', JSON.stringify(futurePlans));
+            renderFuturePlans();
+            showPopup('✅ Plan saved!');
+            await syncAllData();
         }
 
         async function deletePlan(planId) {
-            try {
-                const { error } = await supabaseClient.from('future_plans').delete().eq('id', planId);
-                if (error) { alert('❌ Failed to delete plan'); return; }
-                if (countdownIntervals.has(planId)) {
-                    const interval = countdownIntervals.get(planId);
-                    if (interval.cancel) interval.cancel();
-                    countdownIntervals.delete(planId);
-                }
-                showPopup('💔 Plan removed');
-                await loadFuturePlans();
-            } catch (err) { alert('❌ Failed to delete plan'); }
-        }
-
-        function checkAllPlansStatus() {
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            let todayPlans = [];
-            let passedPlans = [];
-            futurePlans.forEach(plan => {
-                const planDate = new Date(plan.date);
-                const planDay = new Date(planDate.getFullYear(), planDate.getMonth(), planDate.getDate());
-                if (planDay.getTime() === today.getTime()) todayPlans.push(plan);
-                else if (planDay < today) passedPlans.push(plan);
-            });
-            if (todayPlans.length > 0) {
-                setTimeout(() => { todayPlans.forEach(plan => showPopup(`💫 TODAY IS THE DAY! "${plan.title}" ❤️`)); }, 2000);
+            futurePlans = futurePlans.filter(p => p.id !== planId);
+            if (countdownIntervals.has(planId)) {
+                const interval = countdownIntervals.get(planId);
+                if (interval.cancel) interval.cancel();
+                countdownIntervals.delete(planId);
             }
-            if (passedPlans.length > 0) {
-                setTimeout(() => {
-                    const names = passedPlans.map(p => p.title).join(', ');
-                    showPopup(`📅 You missed: ${names}. Check your plans! 💕`);
-                }, 4000);
-            }
+            localStorage.setItem('lovequest_plans', JSON.stringify(futurePlans));
+            renderFuturePlans();
+            showPopup('💔 Plan removed');
+            await syncAllData();
         }
 
         function initFuturePlanner() {
-            loadFuturePlans();
             const dateInput = document.getElementById('planDate');
             if (dateInput) {
                 const now = new Date();
-                // Set to exactly 2 minutes from now
                 now.setMinutes(now.getMinutes() + 2);
-                
                 const year = now.getFullYear();
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const day = String(now.getDate()).padStart(2, '0');
                 const hours = String(now.getHours()).padStart(2, '0');
                 const minutes = String(now.getMinutes()).padStart(2, '0');
-                
-                // Set BOTH min AND value to now + 2 minutes
                 const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
                 dateInput.min = minDateTime;
                 dateInput.value = minDateTime;
-                
-                // Force the step to 1 minute
                 dateInput.step = '60';
             }
             let selectedAuthor = 'Me ❤️';
@@ -836,353 +784,14 @@ let showScreenGlobal = null;
                     const title = titleInput ? titleInput.value.trim() : '';
                     const description = descInput ? descInput.value.trim() : '';
                     const date = dateInputEl ? dateInputEl.value : '';
-                    if (!title) { showPopup('Please add a title for your plan 💭'); if (titleInput) titleInput.focus(); return; }
-                    if (!date) { showPopup('When are we planning this? 📅'); if (dateInputEl) dateInputEl.focus(); return; }
+                    if (!title) { showPopup('Please add a title for your plan 💭'); return; }
+                    if (!date) { showPopup('When are we planning this? 📅'); return; }
                     addFuturePlan(title, description, date, selectedAuthor);
                     if (titleInput) titleInput.value = '';
                     if (descInput) descInput.value = '';
-                    // Reset to 2 minutes from now
-                    const resetNow = new Date();
-                    resetNow.setMinutes(resetNow.getMinutes() + 2);
-                    const ry = resetNow.getFullYear();
-                    const rm = String(resetNow.getMonth() + 1).padStart(2, '0');
-                    const rd = String(resetNow.getDate()).padStart(2, '0');
-                    const rh = String(resetNow.getHours()).padStart(2, '0');
-                    const rmin = String(resetNow.getMinutes()).padStart(2, '0');
-                    if (dateInputEl) {
-                        dateInputEl.value = `${ry}-${rm}-${rd}T${rh}:${rmin}`;
-                        dateInputEl.min = `${ry}-${rm}-${rd}T${rh}:${rmin}`;
-                    }
-                    if (titleInput) titleInput.focus();
                 });
             }
             renderFuturePlans();
-        }
-
-        // ========== NOTES SYSTEM ==========
-        async function getCurrentUser() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            currentUser = session?.user?.email || 'Unknown';
-        }
-        function timeAgo(dateString) {
-            const now = new Date();
-            const date = new Date(dateString);
-            const seconds = Math.floor((now - date) / 1000);
-            if (seconds < 60) return 'just now';
-            const minutes = Math.floor(seconds / 60);
-            if (minutes < 60) return `${minutes}m ago`;
-            const hours = Math.floor(minutes / 60);
-            if (hours < 24) return `${hours}h ago`;
-            const days = Math.floor(hours / 24);
-            if (days < 7) return `${days}d ago`;
-            return date.toLocaleDateString();
-        }
-        function sanitizeHTML(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-        async function loadNotes() {
-            try {
-                const { data, error } = await supabaseClient.from('love_notes').select('*').order('created_at', { ascending: false });
-                if (error) { console.error('Error loading notes:', error); return; }
-                renderNotes(data || []);
-            } catch (err) { console.error('Failed to load notes:', err); }
-        }
-        function renderNotes(notes) {
-            const container = document.getElementById('notesList');
-            if (!container) return;
-            container.innerHTML = '';
-            if (notes.length === 0) {
-                container.innerHTML = '<div class="notes-empty"><div class="empty-notes-icon">💌</div><p>No notes yet...</p><p class="notes-empty-sub">Write the first love note!</p></div>';
-                return;
-            }
-            notes.forEach(note => { const card = createNoteCard(note); container.appendChild(card); });
-        }
-        function createNoteCard(note) {
-            const card = document.createElement('div');
-            card.className = 'note-card';
-            card.id = `note-${note.id}`;
-            const likes = note.likes || 0;
-            card.innerHTML = `
-                <div class="note-body"><div class="note-text" id="text-${note.id}">${sanitizeHTML(note.content)}</div><div class="note-actions"><button class="action-btn edit-btn" title="Edit">✏️</button><button class="action-btn delete-btn" title="Delete">🗑️</button></div></div>
-                <div class="note-meta"><span class="note-author">${sanitizeHTML(note.author_name || 'Anonymous')}</span><span class="note-time">${timeAgo(note.created_at)}</span></div>
-                <div class="reactions-bar"><button class="like-btn">🤍 <span class="like-count">${likes}</span></button><button class="reply-toggle-btn">💬 Replies</button></div>
-                <div class="replies-section" id="replies-${note.id}" style="display:none;"><div id="comments-${note.id}"></div><div class="reply-composer"><input type="text" id="reply-input-${note.id}" class="reply-input" placeholder="Write a reply..."/><button class="reply-send-btn" id="reply-send-${note.id}">Send</button></div></div>`;
-            
-            const likeBtn = card.querySelector('.like-btn');
-const likedNotes = JSON.parse(localStorage.getItem('liked_notes') || '{}');
-
-// If already liked in this browser, disable the button
-if (likedNotes[note.id]) {
-    likeBtn.innerHTML = `❤️ <span class="like-count">${likes}</span>`;
-    likeBtn.disabled = true;
-    likeBtn.style.opacity = '0.7';
-    likeBtn.style.cursor = 'not-allowed';
-} else {
-    likeBtn.addEventListener('click', () => toggleLike(note.id));
-}
-            const editBtn = card.querySelector('.edit-btn');
-            if (editBtn) editBtn.addEventListener('click', () => startEditing(note.id, note.content));
-            const deleteBtn = card.querySelector('.delete-btn');
-            if (deleteBtn) deleteBtn.addEventListener('click', () => deleteNote(note.id));
-            card.querySelector('.reply-toggle-btn').addEventListener('click', () => {
-                const section = document.getElementById(`replies-${note.id}`);
-                if (section.style.display === 'none') { section.style.display = 'block'; loadComments(note.id); }
-                else section.style.display = 'none';
-            });
-            const sendBtn = card.querySelector(`#reply-send-${note.id}`);
-            if (sendBtn) sendBtn.addEventListener('click', () => sendReply(note.id));
-            const replyInput = card.querySelector(`#reply-input-${note.id}`);
-            if (replyInput) replyInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendReply(note.id); });
-            loadComments(note.id);
-            return card;
-        }
-        function updateSingleNote(note) {
-            const existingCard = document.getElementById(`note-${note.id}`);
-            if (existingCard) { const newCard = createNoteCard(note); existingCard.replaceWith(newCard); }
-        }
-        async function saveNote() {
-            const input = document.getElementById("newNoteText");
-            const nameInput = document.getElementById("nameInput");
-            if (!input) return;
-            const content = input.value.trim();
-            let name = nameInput?.value?.trim() || "Anonymous";
-            if (!content) { alert("Write something first! 💭"); return; }
-            try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                if (!name || name === "Anonymous") { if (session?.user?.email) name = session.user.email.split('@')[0]; }
-                const { error } = await supabaseClient.from("love_notes").insert([{ content: content, author_name: name }]);
-                if (error) { alert("❌ Failed to save note."); return; }
-                input.value = "";
-                if (nameInput) nameInput.value = "";
-                const countSpan = document.getElementById('charCount');
-                if (countSpan) countSpan.textContent = '0';
-                alert("💕 Note saved successfully!");
-                loadNotes();
-            } catch (err) { alert("❌ Something went wrong."); }
-        }
-      
-  async function toggleLike(noteId) {
-    const card = document.getElementById(`note-${noteId}`);
-    const likeBtn = card?.querySelector('.like-btn');
-    const likeCountSpan = card?.querySelector('.like-count');
-    
-    // Check localStorage if this note was already liked
-    const likedNotes = JSON.parse(localStorage.getItem('liked_notes') || '{}');
-    
-    if (likedNotes[noteId]) {
-        showPopup('❤️ You already liked this note!');
-        return;
-    }
-    
-    try {
-        // Get current likes from the displayed count
-        const currentLikes = parseInt(likeCountSpan?.textContent || '0');
-        const newLikes = currentLikes + 1;
-        
-        // Update in database
-        const { error } = await supabaseClient
-            .from('love_notes')
-            .update({ likes: newLikes })
-            .eq('id', noteId);
-        
-        if (error) {
-            console.error('Like error:', error);
-            return;
-        }
-        
-        // Save to localStorage
-        likedNotes[noteId] = true;
-        localStorage.setItem('liked_notes', JSON.stringify(likedNotes));
-        
-        // Update button immediately
-        if (likeBtn) {
-            likeBtn.innerHTML = `❤️ <span class="like-count">${newLikes}</span>`;
-            likeBtn.disabled = true;
-            likeBtn.style.opacity = '0.7';
-            likeBtn.style.cursor = 'not-allowed';
-            likeBtn.style.transform = 'scale(1.2)';
-            setTimeout(() => {
-                likeBtn.style.transform = 'scale(1)';
-            }, 200);
-        }
-        
-        showPopup('❤️ Liked!');
-        
-    } catch (err) {
-        console.error('Like error:', err);
-    }
-}
-   async function sendReply(noteId) {
-    const input = document.getElementById(`reply-input-${noteId}`);
-    const content = input?.value?.trim();
-    
-    if (!content) return;
-    
-    try {
-        let authorName = "Anonymous";
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session?.user?.email) {
-            authorName = session.user.email.split('@')[0];
-        }
-        
-        const { error } = await supabaseClient
-            .from('comments')
-            .insert([{ 
-                note_id: noteId, 
-                content: content, 
-                author_name: authorName 
-            }]);
-        
-        if (error) {
-            console.error('Reply error:', error);
-            alert('❌ Failed to send reply');
-            return;
-        }
-        
-        input.value = '';
-        await loadComments(noteId);
-        
-    } catch (err) {
-        console.error('Send reply error:', err);
-        alert('❌ Failed to send reply');
-    }
-}
-        
-        async function loadComments(noteId) {
-            try {
-                const { data } = await supabaseClient.from('comments').select('*').eq('note_id', noteId).order('created_at', { ascending: true });
-                const container = document.getElementById(`comments-${noteId}`);
-                if (!container) return;
-                if (!data || data.length === 0) { container.innerHTML = '<p style="color: #b3708c; font-size: 0.85rem; padding: 8px;">No replies yet. 💬</p>'; return; }
-                container.innerHTML = '';
-                data.forEach(comment => {
-                    const div = document.createElement('div');
-                    div.className = 'reply-item';
-                    div.innerHTML = `<div class="reply-text"><strong>${sanitizeHTML(comment.author_name || 'Anonymous')}</strong>: ${sanitizeHTML(comment.content)}</div><div class="reply-time">${timeAgo(comment.created_at)}</div>`;
-                    container.appendChild(div);
-                });
-            } catch (err) { /* ignore */ }
-        }
-        async function startEditing(noteId, currentText) {
-            const textDiv = document.getElementById(`text-${noteId}`);
-            if (!textDiv) return;
-            textDiv.contentEditable = true;
-            textDiv.classList.add('editable');
-            textDiv.focus();
-            const saveEdit = async () => {
-                const newText = textDiv.textContent.trim();
-                textDiv.contentEditable = false;
-                textDiv.classList.remove('editable');
-                if (newText && newText !== currentText) {
-                    await supabaseClient.from('love_notes').update({ content: newText }).eq('id', noteId);
-                }
-            };
-            textDiv.addEventListener('blur', saveEdit, { once: true });
-            textDiv.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); textDiv.blur(); } });
-        }
-   async function deleteNote(noteId) {
-    if (!confirm('Delete this note?')) return;
-    
-    // Remove from UI immediately (optimistic update)
-    const card = document.getElementById(`note-${noteId}`);
-    if (card) { 
-        card.style.opacity = '0'; 
-        card.style.transform = 'scale(0.95)'; 
-        card.style.transition = 'all 0.3s ease'; 
-        
-        try {
-            const { error } = await supabaseClient
-                .from('love_notes')
-                .delete()
-                .eq('id', noteId);
-                
-            if (error) { 
-                // If delete fails, restore the card
-                card.style.opacity = '1';
-                card.style.transform = 'scale(1)';
-                alert('❌ Failed to delete note: ' + error.message);
-                return; 
-            }
-            
-            // Remove with animation after successful delete
-            setTimeout(() => { 
-                card.remove(); 
-                const container = document.getElementById('notesList'); 
-                if (container && container.querySelectorAll('.note-card').length === 0) { 
-                    container.innerHTML = '<div class="notes-empty"><div class="empty-notes-icon">💌</div><p>No notes yet...</p><p class="notes-empty-sub">Write the first love note!</p></div>'; 
-                } 
-            }, 300);
-            
-        } catch (err) { 
-            // Restore card on error
-            card.style.opacity = '1';
-            card.style.transform = 'scale(1)';
-            alert('❌ Failed to delete note'); 
-        }
-    }
-}
-       function subscribeToNotes() {
-    if (notesSubscription) supabaseClient.removeChannel(notesSubscription);
-    
-    notesSubscription = supabaseClient.channel('love_notes_channel')
-        .on('postgres_changes', 
-            { event: '*', schema: 'public', table: 'love_notes' }, 
-            (payload) => {
-                console.log('Realtime event:', payload.eventType, payload); // Debug log
-                
-                if (payload.eventType === 'INSERT') {
-                    const container = document.getElementById('notesList');
-                    // Only reload if the container is empty or showing empty state
-                    if (container?.querySelector('.notes-empty')) { 
-                        loadNotes(); 
-                    } else if (container) {
-                        const newCard = createNoteCard(payload.new); 
-                        container.insertBefore(newCard, container.firstChild); 
-                    }
-                } 
-                else if (payload.eventType === 'UPDATE') { 
-                    updateSingleNote(payload.new); 
-                }
-                else if (payload.eventType === 'DELETE') {
-                    // Remove the card without reloading all notes
-                    const card = document.getElementById(`note-${payload.old.id}`);
-                    if (card) { 
-                        card.style.opacity = '0'; 
-                        card.style.transform = 'scale(0.95)'; 
-                        card.style.transition = 'all 0.3s ease'; 
-                        setTimeout(() => { 
-                            card.remove(); 
-                            const c = document.getElementById('notesList'); 
-                            if (c && c.querySelectorAll('.note-card').length === 0) { 
-                                c.innerHTML = '<div class="notes-empty"><div class="empty-notes-icon">💌</div><p>No notes yet...</p><p class="notes-empty-sub">Write the first love note!</p></div>'; 
-                            } 
-                        }, 300); 
-                    }
-                }
-            }
-        ).subscribe();
-}
-        function subscribeToComments() {
-            if (commentSubscription) supabaseClient.removeChannel(commentSubscription);
-            commentSubscription = supabaseClient.channel('comments_channel')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, (payload) => { if (payload.new?.note_id) loadComments(payload.new.note_id); }).subscribe();
-        }
-        function updateCharCount() {
-            const textarea = document.getElementById('newNoteText');
-            const countSpan = document.getElementById('charCount');
-            if (textarea && countSpan) countSpan.textContent = textarea.value.length;
-        }
-        function initNotesScreen() {
-            getCurrentUser();
-            loadNotes();
-            subscribeToNotes();
-            subscribeToComments();
-            const textarea = document.getElementById('newNoteText');
-            if (textarea) textarea.addEventListener('input', updateCharCount);
-            const saveBtn = document.getElementById('saveNoteBtn');
-            if (saveBtn) saveBtn.addEventListener('click', saveNote);
         }
 
         // ========== EVENT LISTENERS ==========
@@ -1214,7 +823,9 @@ if (likedNotes[note.id]) {
         const goFutureBtn = document.getElementById('goFutureBtn');
         if (goFutureBtn) goFutureBtn.addEventListener('click', () => showScreen('future'));
         const notesBtn = document.getElementById('goNotesBtn');
-        if (notesBtn) notesBtn.addEventListener('click', () => { showScreen('notes'); initNotesScreen(); });
+        if (notesBtn) notesBtn.addEventListener('click', () => { showScreen('notes'); renderNotesFromLocal(); });
+        const saveNoteBtn = document.getElementById('saveNoteBtn');
+        if (saveNoteBtn) saveNoteBtn.addEventListener('click', saveNoteToLocal);
         const backFromFuture = document.getElementById('backFromFuture');
         if (backFromFuture) backFromFuture.addEventListener('click', () => showScreen('home'));
 
@@ -1223,7 +834,6 @@ if (likedNotes[note.id]) {
         initFuturePlanner();
 
         setTimeout(() => { if (currentScreen === 'home') showPopup(`Hey ${girlfriendName}… I just wanted to remind you I love you ❤️`); }, 1500);
-        setTimeout(() => { if (typeof checkAllPlansStatus === 'function') checkAllPlansStatus(); }, 5000);
     }
 
     // ========== PARTICLES & ANIMATIONS ==========
@@ -1254,23 +864,6 @@ if (likedNotes[note.id]) {
         const fragment = document.createDocumentFragment();
         for (let i = 1; i <= 2; i++) { const ring = document.createElement('div'); ring.className = `ring ring-${i}`; fragment.appendChild(ring); }
         ringsContainer.appendChild(fragment);
-        const handleVisibilityChange = () => {
-            const rings = document.querySelectorAll('.ring');
-            if (document.hidden) rings.forEach(r => r.style.animationPlayState = 'paused');
-            else rings.forEach(r => r.style.animationPlayState = 'running');
-        };
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'class' && loginOverlay.classList.contains('hidden')) {
-                    const rings = document.querySelectorAll('.ring');
-                    rings.forEach(r => { r.style.transition = 'opacity 0.5s ease'; r.style.opacity = '0'; });
-                    setTimeout(() => { const c = document.querySelector('.rings-container'); if (c) { c.remove(); document.removeEventListener('visibilitychange', handleVisibilityChange); observer.disconnect(); } }, 500);
-                }
-            });
-        });
-        observer.observe(loginOverlay, { attributes: true });
-        setTimeout(() => { document.querySelectorAll('.ring').forEach((r, i) => { r.style.transition = 'opacity 0.8s ease'; r.style.opacity = '1'; }); }, 100);
     })();
 
     // ========== DOM CONTENT LOADED ==========
@@ -1279,10 +872,6 @@ if (likedNotes[note.id]) {
         if (loginBtn) loginBtn.addEventListener('click', attemptLogin);
         const passwordInput = document.getElementById('passwordInput');
         if (passwordInput) passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') attemptLogin(); });
-        const dailyPasscodeBtn = document.getElementById('dailyPasscodeBtn');
-        if (dailyPasscodeBtn) dailyPasscodeBtn.addEventListener('click', checkDailyPasscode);
-        const dailyPasscodeInput = document.getElementById('dailyPasscodeInput');
-        if (dailyPasscodeInput) dailyPasscodeInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkDailyPasscode(); });
         checkUser();
     });
 })();
