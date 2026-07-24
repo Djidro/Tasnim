@@ -1,7 +1,7 @@
-// ========== GITHUB GIST CONFIGURATION ==========
-const GIST_ID = 'fba30498b001f8dabb4762ce8385cb8a';
-const GITHUB_TOKEN = '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';
-const GIST_FILENAME = 'lovequest-data.json';
+const GITHUB_TOKEN = localStorage.getItem('lovequest_github_token');
+if (!GITHUB_TOKEN) {
+    alert('GitHub token not found. Please set it up.');
+}
 
 // ========== GIST API FUNCTIONS ==========
 async function loadFromGist() {
