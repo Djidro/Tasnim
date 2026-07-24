@@ -1,8 +1,76 @@
+// ========== GITHUB GIST CONFIGURATION ==========
+const GIST_ID = 'fba30498b001f8dabb4762ce8385cb8a';
+const GIST_FILENAME = 'lovequest-data.json';
 const GITHUB_TOKEN = localStorage.getItem('lovequest_github_token');
+
 if (!GITHUB_TOKEN) {
-    alert('GitHub token not found. Please set it up.');
+    console.warn('⚠️ GitHub token not set. Sync disabled. Run: localStorage.setItem("lovequest_github_token", "ghp_YOUR_TOKEN")');
 }
 
+// ========== GIST API FUNCTIONS ==========
+async function loadFromGist() {
+    if (!GITHUB_TOKEN) {
+        console.warn('⚠️ Skipping Gist load - no token');
+        return { notes: [], future_plans: [] };
+    }
+    
+    try {
+        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+        });
+        if (!response.ok) throw new Error('Failed to load');
+        const gist = await response.json();
+        
+        // SAFE CHECK: Make sure files exist before accessing
+        if (!gist.files || !gist.files[GIST_FILENAME]) {
+            console.warn('⚠️ Gist file not found');
+            return { notes: [], future_plans: [] };
+        }
+        
+        const content = gist.files[GIST_FILENAME].content;
+        return content ? JSON.parse(content) : { notes: [], future_plans: [] };
+    } catch (err) {
+        console.error('Gist load error:', err);
+        return { notes: [], future_plans: [] };
+    }
+}
+
+async function saveToGist(data) {
+    if (!GITHUB_TOKEN) {
+        console.warn('⚠️ Skipping Gist save - no token');
+        return false;
+    }
+    
+    try {
+        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify({
+                files: {
+                    [GIST_FILENAME]: {
+                        content: JSON.stringify(data, null, 2)
+                    }
+                }
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Save failed:', errorData);
+            return false;
+        }
+        
+        console.log('✅ Data synced to Gist successfully!');
+        return true;
+    } catch (err) {
+        console.error('Gist save error:', err);
+        return false;
+    }
+}
 // ========== GIST API FUNCTIONS ==========
 async function loadFromGist() {
     try {
