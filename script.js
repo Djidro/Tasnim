@@ -25,7 +25,8 @@ async function saveToGist(data) {
             method: 'PATCH',
             headers: {
                 'Authorization': `token ${GITHUB_TOKEN}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json'
             },
             body: JSON.stringify({
                 files: {
@@ -35,7 +36,14 @@ async function saveToGist(data) {
                 }
             })
         });
-        if (!response.ok) throw new Error('Failed to save');
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Save failed:', errorData);
+            return false;
+        }
+        
+        console.log('✅ Data synced to Gist successfully!');
         return true;
     } catch (err) {
         console.error('Gist save error:', err);
