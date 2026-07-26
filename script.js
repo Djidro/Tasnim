@@ -1,7 +1,7 @@
 // ========== GITHUB GIST CONFIGURATION ==========
 const GIST_ID = 'fba30498b001f8dabb4762ce8385cb8a';
 const GIST_FILENAME = 'lovequest-data.json';
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = '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';
 
 // ========== GIST API FUNCTIONS ==========
 async function loadFromGist() {
