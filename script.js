@@ -1,8 +1,14 @@
 // ========== GITHUB GIST CONFIGURATION ==========
 const GIST_ID = 'fba30498b001f8dabb4762ce8385cb8a';
 const GIST_FILENAME = 'lovequest-data.json';
-const GITHUB_TOKEN = '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';
-
+const GITHUB_TOKEN = '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';
+function showPopup(msg) {
+    const pop = document.createElement('div');
+    pop.className = 'popup-message';
+    pop.textContent = msg;
+    document.body.appendChild(pop);
+    setTimeout(() => pop.remove(), 3000);
+}
 // ========== GIST API FUNCTIONS ==========
 async function loadFromGist() {
     try {
