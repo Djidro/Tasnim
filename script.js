@@ -1,7 +1,7 @@
 // ========== GITHUB GIST CONFIGURATION ==========
-const GIST_ID = 'fba30498b001f8dabb4762ce8385cb8a';
+const GIST_ID = 'b85ba63d4376ddd0862c53e97aade6ab';
 const GIST_FILENAME = 'lovequest-data.json';
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = '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'; 
 function showPopup(msg) {
     const pop = document.createElement('div');
     pop.className = 'popup-message';
