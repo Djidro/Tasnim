@@ -40,20 +40,9 @@ async function loadFromGist() {
 
 async function saveToGist(data) {
     try {
-        const res = await fetch('https://api.github.com/gists/' + GIST_ID, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': 'token ' + GITHUB_TOKEN,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                files: {}
-            })
-        });
-        // Build body separately to avoid template literal issues
         const bodyObj = { files: {} };
         bodyObj.files[GIST_FILENAME] = { content: JSON.stringify(data, null, 2) };
-        const res2 = await fetch('https://api.github.com/gists/' + GIST_ID, {
+        const res = await fetch('https://api.github.com/gists/' + GIST_ID, {
             method: 'PATCH',
             headers: {
                 'Authorization': 'token ' + GITHUB_TOKEN,
@@ -61,7 +50,7 @@ async function saveToGist(data) {
             },
             body: JSON.stringify(bodyObj)
         });
-        if (!res2.ok) throw new Error('save failed');
+        if (!res.ok) throw new Error('save failed');
         console.log('✅ Synced');
         return true;
     } catch (err) {
@@ -69,7 +58,6 @@ async function saveToGist(data) {
         return false;
     }
 }
-
 // THEME ENGINE
 const THEMES = [
     { bg1:'#6B0F2A', bg2:'#FFF4E0', bg3:'#D4AF6A', bodyText:'#2B2024',
