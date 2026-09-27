@@ -2056,22 +2056,82 @@ function startThemeCycler() {
         overlay.appendChild(wrap);
     })();
 
-    // CINEMATIC INTRO
+        // ============================================================
+    // 🎬 CINEMATIC INTRO — with 3D heart
+    //   Timeline:
+    //     0.5s  heart rises
+    //     1.5s  date fades in behind heart
+    //     4.0s  line 1 types
+    //     6.5s  line 2 types
+    //     9.0s  golden burst + heart explodes
+    //     9.3s  heart flies away
+    //    10.2s  intro fades out
+    // ============================================================
     function runIntro() {
         const intro = document.getElementById('introOverlay');
         const skip = document.getElementById('skipIntroBtn');
         if (!intro) return;
+
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const heartStage = document.getElementById('introHeartStage');
+        const burst = document.getElementById('introBurst');
+
         let introDone = false;
+        const timers = [];
+
+        function later(fn, ms) {
+            const id = setTimeout(fn, ms);
+            timers.push(id);
+            return id;
+        }
+
         function endIntro() {
             if (introDone) return;
             introDone = true;
+            timers.forEach(function (t) { clearTimeout(t); clearInterval(t); });
             intro.classList.add('hidden');
-            setTimeout(function () { if (intro && intro.parentNode) intro.style.display = 'none'; }, 1200);
+            setTimeout(function () {
+                if (intro && intro.parentNode) intro.style.display = 'none';
+            }, 1200);
         }
-        if (skip) skip.addEventListener('click', endIntro);
-        setTimeout(endIntro, 9500);
-    }
 
+        // If reduced motion, just show and end quickly
+        if (reduceMotion) {
+            if (heartStage) heartStage.classList.add('rise');
+            if (skip) skip.addEventListener('click', endIntro);
+            later(endIntro, 4000);
+            return;
+        }
+
+        // 0.5s — heart rises
+        later(function () {
+            if (heartStage) heartStage.classList.add('rise');
+        }, 500);
+
+        // 9.0s — golden burst + heart explodes
+        later(function () {
+            if (burst) burst.classList.add('fire');
+            if (heartStage) heartStage.classList.add('explode');
+        }, 9000);
+
+        // 9.3s — heart shrinks and flies away
+        later(function () {
+            if (heartStage) heartStage.classList.add('fly-away');
+        }, 9300);
+
+        // 10.2s — fade out intro
+        later(function () {
+            if (intro) intro.classList.add('hidden');
+            later(function () {
+                if (intro && intro.parentNode) intro.style.display = 'none';
+            }, 1200);
+        }, 10200);
+
+        // Safety — force end if something hangs
+        later(endIntro, 13000);
+
+        if (skip) skip.addEventListener('click', endIntro);
+    }
     document.addEventListener('DOMContentLoaded', function () {
         runIntro();
         const loginBtn = document.getElementById('loginBtn');
@@ -2081,5 +2141,83 @@ function startThemeCycler() {
             if (e.key === 'Enter') attemptLogin();
         });
         checkUser();
+
+        // ============================================================
+        // 🔒 AUTO-LOCK ON LEAVE
+        // Locks the site the moment she switches tabs, apps, or leaves the page.
+        // ============================================================
+        function lockSite() {
+            // Clear the "logged in" flag so next visit asks for the PIN
+            sessionStorage.removeItem('lovequest_auth');
+
+            const overlay = document.getElementById('loginOverlay');
+            const app = document.getElementById('mainApp');
+            const iconWrap = document.getElementById('lockIconWrap');
+            const pwdInput = document.getElementById('passwordInput');
+            const errEl = document.getElementById('loginError');
+
+            // Show lock screen again
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                overlay.classList.remove('unlocked');
+            }
+            if (app) app.classList.remove('visible');
+
+            // Reset lock icon to locked state
+            if (iconWrap) iconWrap.classList.remove('unlocked');
+
+            // Clear the PIN input and any error message
+            if (pwdInput) pwdInput.value = '';
+            if (errEl) errEl.textContent = '';
+
+            // Reset the star field + floating hearts (they may have been
+            // removed from the DOM during the session)
+            const starsEl = document.getElementById('lockStars');
+            const heartsEl = document.getElementById('lockFloatHearts');
+            if (starsEl) starsEl.dataset.built = '';
+            if (heartsEl) heartsEl.dataset.built = '';
+            buildLockStars();
+            spawnLockHearts();
+
+            // Optionally reset the experience/panel states back to defaults
+            // so when she unlocks again, she sees the home screen.
+            const homeScreen = document.getElementById('homeScreen');
+            if (homeScreen) {
+                document.querySelectorAll('.screen').forEach(function (s) {
+                    s.classList.remove('active');
+                });
+                homeScreen.classList.add('active');
+            }
+        }
+
+        // Lock when the tab becomes hidden — covers:
+        //   • Switching tabs (desktop)
+        //   • Switching apps or locking the phone (mobile)
+        //   • Minimizing the browser
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                // Only lock if she was actually logged in
+                if (sessionStorage.getItem('lovequest_auth') === 'true') {
+                    lockSite();
+                }
+            }
+        });
+
+        // Backup: also lock if the window loses focus (desktop only)
+        // Uncomment the block below if you want locking on desktop
+        // when she clicks another window without switching tabs:
+        //
+        // window.addEventListener('blur', function () {
+        //     if (sessionStorage.getItem('lovequest_auth') === 'true') {
+        //         lockSite();
+        //     }
+        // });
+
+        // Backup: lock just before the page unloads (closing tab, refreshing, navigating)
+        window.addEventListener('pagehide', function () {
+            if (sessionStorage.getItem('lovequest_auth') === 'true') {
+                sessionStorage.removeItem('lovequest_auth');
+            }
+        });
     });
 })();
