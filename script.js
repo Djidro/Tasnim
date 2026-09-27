@@ -126,39 +126,185 @@ function startThemeCycler() {
         const overlay = document.getElementById('loginOverlay');
         const app = document.getElementById('mainApp');
         if (isLoggedIn === 'true') {
-            if (overlay) overlay.classList.add('hidden');
+            // Already logged in — skip animation, show instantly
+            if (overlay) {
+                overlay.classList.add('hidden');
+                overlay.classList.add('unlocked');
+            }
             if (app) app.classList.add('visible');
             if (!window._gameInitialized) { initGameApp(); window._gameInitialized = true; }
             startThemeCycler();
         } else {
             if (overlay) overlay.classList.remove('hidden');
             if (app) app.classList.remove('visible');
+            // Build the star field + floating hearts for the lock screen
+            buildLockStars();
+            spawnLockHearts();
         }
     }
 
-    function attemptLogin() {
+       function attemptLogin() {
         const input = document.getElementById('passwordInput');
         const error = document.getElementById('loginError');
         const overlay = document.getElementById('loginOverlay');
         const app = document.getElementById('mainApp');
         const password = input ? input.value.trim().toLowerCase() : '';
-        if (!password) { if (error) error.textContent = "❌ Please enter our special date"; return; }
-        if (VALID_PASSWORDS.includes(password)) {
-            if (overlay) overlay.classList.add('hidden');
-            if (app) app.classList.add('visible');
-            sessionStorage.setItem('lovequest_auth', 'true');
-            if (!window._gameInitialized) { initGameApp(); window._gameInitialized = true; }
-            startThemeCycler();
-            showPopup('💕 Welcome back, my love! ✨');
-        } else {
-            if (error) error.textContent = "❌ That's not our date, try again... 💭";
-            if (input) { input.value = ''; input.focus(); }
+
+        if (!password) {
+            if (error) error.textContent = "❌ Please enter our special date";
+            if (input) input.classList.add('shake');
+            setTimeout(function () { if (input) input.classList.remove('shake'); }, 600);
+            return;
         }
+
+        if (VALID_PASSWORDS.includes(password)) {
+            // 🔓 SUCCESS — play unlock animation
+            if (error) error.textContent = '';
+            if (input) input.blur();
+            playUnlockAnimation(function () {
+                // After animation completes, reveal main app
+                if (overlay) {
+                    overlay.classList.add('hidden');
+                    overlay.classList.add('unlocked');
+                }
+                if (app) app.classList.add('visible');
+                sessionStorage.setItem('lovequest_auth', 'true');
+                if (!window._gameInitialized) { initGameApp(); window._gameInitialized = true; }
+                startThemeCycler();
+                showPopup('💕 Welcome back, my love! ✨');
+            });
+        } else {
+            // ❌ WRONG PIN — shake + error
+            if (error) error.textContent = "❌ That's not our date, try again... 💭";
+            if (input) {
+                input.classList.add('shake');
+                setTimeout(function () {
+                    input.classList.remove('shake');
+                    input.value = '';
+                    input.focus();
+                }, 600);
+            }
+        }
+    }
+      // ============================================================
+    // 🔐 LOCK SCREEN HELPERS
+    // ============================================================
+
+    // Build scattered twinkling stars in #lockStars
+    function buildLockStars() {
+        const container = document.getElementById('lockStars');
+        if (!container) return;
+        // Avoid double-building
+        if (container.dataset.built === '1') return;
+        container.dataset.built = '1';
+        container.innerHTML = '';
+
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const count = reduceMotion ? 25 : 60;
+        const fragment = document.createDocumentFragment();
+
+        for (let i = 0; i < count; i++) {
+            const star = document.createElement('div');
+            star.className = 'lock-star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            const size = (1 + Math.random() * 2.2).toFixed(1) + 'px';
+            star.style.width = size;
+            star.style.height = size;
+            star.style.animationDelay = (Math.random() * 3.5).toFixed(2) + 's';
+            star.style.animationDuration = (2.5 + Math.random() * 2.5).toFixed(2) + 's';
+            fragment.appendChild(star);
+        }
+        container.appendChild(fragment);
+    }
+
+    // Spawn floating hearts that drift up from the bottom
+    function spawnLockHearts() {
+        const container = document.getElementById('lockFloatHearts');
+        if (!container) return;
+        if (container.dataset.built === '1') return;
+        container.dataset.built = '1';
+        container.innerHTML = '';
+
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduceMotion) return;
+
+        const hearts = ['❤️', '💗', '💕', '💖', '💘'];
+        let i = 0;
+
+        function spawnOne() {
+            if (!container.parentNode) return; // lock screen gone
+            const h = document.createElement('div');
+            h.className = 'lock-float-heart';
+            h.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+            h.style.left = (Math.random() * 100) + '%';
+            h.style.fontSize = (0.8 + Math.random() * 1.2).toFixed(2) + 'rem';
+            const dur = (9 + Math.random() * 6).toFixed(2);
+            h.style.animationDuration = dur + 's';
+            h.style.animationDelay = (Math.random() * 2).toFixed(2) + 's';
+            container.appendChild(h);
+            // Clean up after animation ends
+            setTimeout(function () { if (h.parentNode) h.parentNode.removeChild(h); }, (parseFloat(dur) + 3) * 1000);
+        }
+
+        // Spawn 1 heart every ~2 seconds, up to 30, then stop adding
+        const interval = setInterval(function () {
+            if (!container.parentNode) { clearInterval(interval); return; }
+            spawnOne();
+            i++;
+            if (i >= 30) clearInterval(interval);
+        }, 2000);
+
+        // Kick off with a few immediate ones so screen isn't empty
+        for (let k = 0; k < 4; k++) setTimeout(spawnOne, k * 300);
+    }
+
+    // Play the 🔒 → 🔓 + heart burst, then call onComplete
+    function playUnlockAnimation(onComplete) {
+        const overlay = document.getElementById('loginOverlay');
+        const iconWrap = document.getElementById('lockIconWrap');
+        const burst = document.getElementById('lockBurst');
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Flip icon to unlocked
+        if (iconWrap) iconWrap.classList.add('unlocked');
+
+        // Burst hearts from the lock (skip if reduced motion)
+        if (burst && !reduceMotion) {
+            const heartEmojis = ['❤️', '💗', '💕', '💖', '💘', '✨'];
+            const total = 22;
+            for (let i = 0; i < total; i++) {
+                const h = document.createElement('div');
+                h.className = 'lock-burst-heart';
+                h.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+                const angle = (Math.PI * 2 * i) / total + (Math.random() * 0.4 - 0.2);
+                const dist = 80 + Math.random() * 120;
+                const bx = Math.cos(angle) * dist;
+                const by = Math.sin(angle) * dist;
+                h.style.setProperty('--bx', bx.toFixed(1) + 'px');
+                h.style.setProperty('--by', by.toFixed(1) + 'px');
+                h.style.setProperty('--br', (Math.random() * 720 - 360).toFixed(0) + 'deg');
+                h.style.animationDelay = (Math.random() * 0.15).toFixed(2) + 's';
+                h.style.fontSize = (1 + Math.random() * 1.1).toFixed(2) + 'rem';
+                burst.appendChild(h);
+            }
+            setTimeout(function () {
+                if (burst) burst.innerHTML = '';
+            }, 2000);
+        }
+
+        // Add the whole-overlay brightening class
+        if (overlay) overlay.classList.add('unlocked');
+
+        // Then fade out
+        const delay = reduceMotion ? 300 : 1600;
+        setTimeout(function () {
+            if (typeof onComplete === 'function') onComplete();
+        }, delay);
     }
 
     const girlfriendName = "Tasnim";
     const ANNIVERSARY = new Date('2017-12-28T00:00:00');
-
     const specialMessages = [
         "You're my favorite notification ❤️", "Every day with you is a new level of love.",
         "I fall for you again and again.", "You're the heart of my game.",
