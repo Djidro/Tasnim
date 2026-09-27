@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#8B1E3F">
-    <title>💗 Love Quest · Tasnim</title>
+       <title>💗 Love Quest · Tasnim</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Great+Vibes&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,20 +25,44 @@
 
     <canvas id="heart-particle-canvas"></canvas>
 
-    <!-- PASSWORD OVERLAY -->
+       <!-- 🔐 CINEMATIC LOCK SCREEN -->
     <div id="loginOverlay" class="hidden">
-        <div class="login-card">
-            <div class="login-icon">💗</div>
-            <h2>Love Quest</h2>
-            <p class="subtitle">QUEEN ALMAHDI ✨</p>
-            <input type="password" id="passwordInput" class="login-input"
-                   placeholder="🔐 Our special date" autocomplete="off" inputmode="text" />
-            <button id="loginBtn" class="login-btn">💕 Open Our World</button>
-            <p id="loginError" class="error-message"></p>
-            <div class="hint-note">infinite</div>
+        <!-- Background layers -->
+        <div class="lock-backdrop"></div>
+        <div class="lock-stars" id="lockStars"></div>
+        <div class="lock-nebula"></div>
+        <div class="lock-float-hearts" id="lockFloatHearts"></div>
+
+        <!-- Main lock stage -->
+        <div class="lock-stage">
+
+            <!-- Glowing lock icon + rotating ring -->
+            <div class="lock-icon-wrap" id="lockIconWrap">
+                <div class="lock-ring-outer"></div>
+                <div class="lock-ring-inner"></div>
+                <div class="lock-icon" id="lockIcon">🔒</div>
+                <div class="lock-burst" id="lockBurst"></div>
+            </div>
+
+            <!-- Heartbeat line under the lock -->
+            <svg class="lock-heartbeat" viewBox="0 0 800 120" preserveAspectRatio="none">
+                <path d="M0,60 L160,60 L180,30 L200,90 L220,60 L400,60 L420,20 L440,100 L460,60 L640,60 L660,40 L680,80 L700,60 L800,60" />
+            </svg>
+
+            <!-- Story text -->
+            <p class="lock-line-1">A love story locked with a date…</p>
+            <p class="lock-line-2">Whisper our special date to unlock 💗</p>
+
+            <!-- PIN input -->
+            <div class="lock-input-wrap">
+                <input type="password" id="passwordInput" class="lock-input"
+                       placeholder="🔐 Our special date" autocomplete="off" inputmode="text" />
+                <button id="loginBtn" class="lock-btn">💕 Unlock Our World</button>
+                <p id="loginError" class="lock-error"></p>
+            </div>
+
         </div>
     </div>
-
     <!-- MAIN APP -->
     <div id="mainApp">
         <div class="game-wrapper">
