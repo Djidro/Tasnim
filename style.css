@@ -374,6 +374,131 @@ body::before {
     100% { opacity: 0; transform: translate(-50%, -50%) scale(30); }
 }
 /* ============================================================
+   INTRO EXTRAS — logo, stars, nebula, typing, burst
+   ============================================================ */
+
+/* Drifting stars background */
+.intro-stars {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+.intro-star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #FFFDF9;
+    border-radius: 50%;
+    opacity: 0.6;
+    box-shadow: 0 0 4px rgba(255, 253, 249, 0.8);
+    animation: starTwinkle 3.5s ease-in-out infinite;
+}
+@keyframes starTwinkle {
+    0%, 100% { opacity: 0.25; transform: scale(1); }
+    50%      { opacity: 0.95; transform: scale(1.35); }
+}
+
+/* Soft nebula glow */
+.intro-nebula {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background:
+        radial-gradient(circle at 25% 30%, rgba(232, 160, 184, 0.18) 0%, transparent 45%),
+        radial-gradient(circle at 75% 70%, rgba(212, 175, 106, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(139, 30, 63, 0.22) 0%, transparent 65%);
+    animation: nebulaDrift 26s ease-in-out infinite alternate;
+}
+@keyframes nebulaDrift {
+    0%   { transform: scale(1) translate(0, 0); opacity: 0.9; }
+    100% { transform: scale(1.08) translate(-12px, 8px); opacity: 1; }
+}
+
+/* Logo at top */
+.intro-logo-wrap {
+    position: relative;
+    z-index: 3;
+    width: 130px;
+    height: 130px;
+    margin: 0 auto 12px;
+    opacity: 0;
+    transform: translateY(-12px) scale(0.9);
+    animation: logoReveal 1.6s ease 0.5s forwards;
+    filter: drop-shadow(0 0 25px rgba(232, 160, 184, 0.6))
+            drop-shadow(0 0 50px rgba(212, 175, 106, 0.35));
+}
+.intro-logo {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+@keyframes logoReveal {
+    0%   { opacity: 0; transform: translateY(-12px) scale(0.9); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Second typing line (script font) */
+.intro-line-2 {
+    font-family: 'Great Vibes', 'Cormorant Garamond', cursive;
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    font-style: normal;
+    color: #FFF4E0;
+    text-shadow:
+        0 0 14px rgba(232, 160, 184, 0.7),
+        0 0 30px rgba(212, 175, 106, 0.4);
+}
+
+/* Blinking cursor while typing */
+.intro-type::after {
+    content: '|';
+    margin-left: 2px;
+    opacity: 0;
+    color: #E8A0B8;
+    animation: cursorBlink 0.9s step-end infinite;
+}
+.intro-type.done::after {
+    content: '';
+    animation: none;
+}
+@keyframes cursorBlink {
+    0%, 100% { opacity: 0; }
+    50%      { opacity: 1; }
+}
+
+/* Golden burst at end */
+.intro-burst {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 3;
+    background: radial-gradient(circle,
+        rgba(255, 240, 200, 1) 0%,
+        rgba(232, 160, 184, 0.7) 30%,
+        transparent 70%);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+}
+.intro-burst.fire {
+    animation: introBurst 1.6s ease-out forwards;
+}
+@keyframes introBurst {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+    20%  { opacity: 1; transform: translate(-50%, -50%) scale(6); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(30); }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .intro-logo-wrap { width: 100px; height: 100px; }
+}
+/* ============================================================
    INTRO
    ============================================================ */
 #introOverlay {
@@ -394,17 +519,6 @@ body::before {
 }
 #introOverlay.hidden { opacity: 0; pointer-events: none; }
 @keyframes introFadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.intro-heartbeat-line { width: min(80%, 640px); height: 100px; opacity: 0.85; margin-bottom: 20px; }
-.intro-heartbeat-line svg { width: 100%; height: 100%; }
-#heartbeatPath {
-    fill: none; stroke: #E8A0B8; stroke-width: 2.5;
-    stroke-linecap: round; stroke-linejoin: round;
-    filter: drop-shadow(0 0 6px #E8A0B8);
-    stroke-dasharray: 2000; stroke-dashoffset: 2000;
-    animation: drawBeat 3.4s ease-in-out forwards;
-}
-@keyframes drawBeat { 0% { stroke-dashoffset: 2000; } 60%, 100% { stroke-dashoffset: 0; } }
 
 .intro-date {
     font-family: 'Great Vibes', 'Cormorant Garamond', cursive;
