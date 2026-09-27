@@ -10,6 +10,7 @@
 </head>
 <body>
 
+       <canvas id="heart-particle-canvas"></canvas>
     <!-- 🎬 CINEMATIC OPENING -->
     <div id="introOverlay">
         <!-- Drifting stars background -->
@@ -17,20 +18,21 @@
         <!-- Soft nebula glow -->
         <div class="intro-nebula"></div>
 
-        <!-- 3D glowing heart -->
-        <div class="intro-heart-stage" id="introHeartStage">
-            <div class="intro-heart" id="introHeart">
-                <div class="intro-heart-layer l1"></div>
-                <div class="intro-heart-layer l2"></div>
-                <div class="intro-heart-layer l3"></div>
-                <div class="intro-heart-shine"></div>
-            </div>
-            <div class="intro-heart-shadow" id="introHeartShadow"></div>
-        </div>
-
-        <div class="intro-heartbeat-line">
-            <svg viewBox="0 0 800 120" preserveAspectRatio="none">
-                <path id="heartbeatPath" d="M0,60 L120,60 L140,20 L160,100 L180,60 L300,60 L320,30 L340,90 L360,60 L520,60 L540,15 L560,105 L580,60 L800,60" />
+        <!-- Logo at top -->
+        <div class="intro-logo-wrap" id="introLogoWrap">
+            <svg class="intro-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#E8A0B8"/>
+                        <stop offset="100%" stop-color="#D4AF6A"/>
+                    </linearGradient>
+                </defs>
+                <!-- Outer hexagon -->
+                <polygon points="100,10 180,55 180,145 100,190 20,145 20,55"
+                         fill="url(#logoGrad)" stroke="#FFF4E0" stroke-width="1.5"/>
+                <!-- Stylized N (white cutout) -->
+                <path d="M 65 130 L 65 75 Q 65 65 75 65 Q 85 65 85 75 L 85 95 L 115 65 Q 125 60 130 68 Q 135 76 127 83 L 105 105 L 135 130 L 135 130 L 135 75 Q 135 65 145 65 Q 155 65 155 75 L 155 130 Q 155 140 145 140 Q 138 140 133 135 L 100 105 L 85 120 L 85 130 Q 85 140 75 140 Q 65 140 65 130 Z"
+                      fill="#0a0208"/>
             </svg>
         </div>
 
@@ -43,8 +45,6 @@
 
         <div class="intro-burst" id="introBurst"></div>
     </div>
-    <canvas id="heart-particle-canvas"></canvas>
-
        <!-- 🔐 CINEMATIC LOCK SCREEN -->
     <div id="loginOverlay" class="hidden">
         <!-- Background layers -->
