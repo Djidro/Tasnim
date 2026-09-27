@@ -2056,15 +2056,14 @@ function startThemeCycler() {
         overlay.appendChild(wrap);
     })();
 
-        // ============================================================
-    // 🎬 CINEMATIC INTRO — with 3D heart
+          // ============================================================
+    // 🎬 CINEMATIC INTRO — logo + text
     //   Timeline:
-    //     0.5s  heart rises
-    //     1.5s  date fades in behind heart
+    //     0.5s  logo fades in
+    //     1.5s  date fades in
     //     4.0s  line 1 types
     //     6.5s  line 2 types
-    //     9.0s  golden burst + heart explodes
-    //     9.3s  heart flies away
+    //     9.0s  golden burst
     //    10.2s  intro fades out
     // ============================================================
     function runIntro() {
@@ -2073,8 +2072,12 @@ function startThemeCycler() {
         if (!intro) return;
 
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const heartStage = document.getElementById('introHeartStage');
         const burst = document.getElementById('introBurst');
+        const line1 = document.getElementById('introLine1');
+        const line2 = document.getElementById('introLine2');
+
+        const text1 = line1 ? line1.dataset.text : '';
+        const text2 = line2 ? line2.dataset.text : '';
 
         let introDone = false;
         const timers = [];
@@ -2083,6 +2086,31 @@ function startThemeCycler() {
             const id = setTimeout(fn, ms);
             timers.push(id);
             return id;
+        }
+
+        function typeText(el, text, speed, onDone) {
+            if (!el) return;
+            el.classList.remove('done');
+            el.textContent = '';
+            let i = 0;
+            if (reduceMotion) {
+                el.textContent = text;
+                el.classList.add('done');
+                if (onDone) onDone();
+                return;
+            }
+            const interval = setInterval(function () {
+                if (introDone) { clearInterval(interval); return; }
+                if (i < text.length) {
+                    el.textContent += text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(interval);
+                    el.classList.add('done');
+                    if (onDone) onDone();
+                }
+            }, speed);
+            timers.push(interval);
         }
 
         function endIntro() {
@@ -2095,29 +2123,27 @@ function startThemeCycler() {
             }, 1200);
         }
 
-        // If reduced motion, just show and end quickly
+        // If reduced motion, end quickly
         if (reduceMotion) {
-            if (heartStage) heartStage.classList.add('rise');
             if (skip) skip.addEventListener('click', endIntro);
             later(endIntro, 4000);
             return;
         }
 
-        // 0.5s — heart rises
+        // 4.0s — line 1 types
         later(function () {
-            if (heartStage) heartStage.classList.add('rise');
-        }, 500);
-
-        // 9.0s — golden burst + heart explodes
-        later(function () {
-            if (burst) burst.classList.add('fire');
-            if (heartStage) heartStage.classList.add('explode');
-        }, 9000);
-
-        // 9.3s — heart shrinks and flies away
-        later(function () {
-            if (heartStage) heartStage.classList.add('fly-away');
-        }, 9300);
+            typeText(line1, text1, 55, function () {
+                // 6.5s — line 2 types
+                later(function () {
+                    typeText(line2, text2, 75, function () {
+                        // 9.0s — golden burst
+                        later(function () {
+                            if (burst) burst.classList.add('fire');
+                        }, 400);
+                    });
+                }, 600);
+            });
+        }, 4000);
 
         // 10.2s — fade out intro
         later(function () {
@@ -2127,7 +2153,7 @@ function startThemeCycler() {
             }, 1200);
         }, 10200);
 
-        // Safety — force end if something hangs
+        // Safety — force end
         later(endIntro, 13000);
 
         if (skip) skip.addEventListener('click', endIntro);
