@@ -12,17 +12,37 @@
 
     <!-- 🎬 CINEMATIC OPENING -->
     <div id="introOverlay">
+        <!-- Drifting stars background -->
+        <div class="intro-stars" id="introStars"></div>
+        <!-- Soft nebula glow -->
+        <div class="intro-nebula"></div>
+
+        <!-- 3D glowing heart -->
+        <div class="intro-heart-stage" id="introHeartStage">
+            <div class="intro-heart" id="introHeart">
+                <div class="intro-heart-layer l1"></div>
+                <div class="intro-heart-layer l2"></div>
+                <div class="intro-heart-layer l3"></div>
+                <div class="intro-heart-shine"></div>
+            </div>
+            <div class="intro-heart-shadow" id="introHeartShadow"></div>
+        </div>
+
         <div class="intro-heartbeat-line">
             <svg viewBox="0 0 800 120" preserveAspectRatio="none">
                 <path id="heartbeatPath" d="M0,60 L120,60 L140,20 L160,100 L180,60 L300,60 L320,30 L340,90 L360,60 L520,60 L540,15 L560,105 L580,60 L800,60" />
             </svg>
         </div>
-        <div class="intro-date" id="introDate">28 • 12 • 2017</div>
-        <div class="intro-line" id="introLine1">And everything changed… ❤️</div>
-        <div class="intro-line" id="introLine2">Our story began.</div>
-        <button id="skipIntroBtn" class="skip-intro-btn">Skip ✨</button>
-    </div>
 
+        <div class="intro-date" id="introDate">28 • 12 • 2017</div>
+
+        <p class="intro-line intro-type" id="introLine1" data-text="And everything changed… ❤️"></p>
+        <p class="intro-line intro-type intro-line-2" id="introLine2" data-text="Our story began."></p>
+
+        <button id="skipIntroBtn" class="skip-intro-btn">Skip ✨</button>
+
+        <div class="intro-burst" id="introBurst"></div>
+    </div>
     <canvas id="heart-particle-canvas"></canvas>
 
        <!-- 🔐 CINEMATIC LOCK SCREEN -->
